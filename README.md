@@ -59,8 +59,8 @@ Check http://app_url/cruds
 
 ## How it works
 
-Just declare crud for your eloquent model in config/cruds.php and refresh crud admin page
-
+- inherit your eloquent model from CrudModel or use RelashionshipTrait[, TreeableTrait]
+- declare crud for your model in config/cruds.php and refresh crud admin page
 
 There is still a lot of work ahead - roles, localization, widgets, etc. ;]
 
