@@ -1,0 +1,22 @@
+{
+    "name": "vshapovalov/crud",
+    "description": "laravel crud admin",
+    "keywords": ["laravel", "crud", "admin"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vladimir Shapovalov",
+            "email": "shapovalov.v@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "illuminate/support": "~5.4.0|~5.5.0",
+        "intervention/image": "^2.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vshapovalov\\Crud\\": "src/"
+        }
+    }
+}

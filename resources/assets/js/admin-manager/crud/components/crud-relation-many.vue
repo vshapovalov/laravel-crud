@@ -1,0 +1,265 @@
+<template>
+    <div class="">
+        <div class="">
+            <div class="control">
+                <a class="button is-info" @click.prevent.stop="addItems">
+                    Добавить
+                </a>
+                <a class="button is-danger" @click.prevent.stop="delAllItems">
+                    Удалить все
+                </a>
+            </div>
+        </div>
+        <crud-table :items="items" :type="crudTypes.PICK_MANY" :crud="crud" @delete="deleteItem" @edit="editItem"
+                    :row-actions="tableActions" :with-pivot="field.relation.pivot"
+                    :pivot-fields="field.relation.pivot ? field.relation.pivot.fields : []"></crud-table>
+
+        <div v-if="modalForm.active" class="modal is-active">
+            <div class="modal-background"></div>
+            <div class="modal-card" style="height: 100%;">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Редактирование</p>
+                    <button class="delete" aria-label="close" @click="modalCancel"></button>
+                </header>
+                <section class="modal-card-body">
+                    <div class="tabs">
+                        <ul>
+                            <li v-for="tab in pivotTabs" :class="{'is-active' : activeTab == tab}"><a @click="setActiveTab(tab)">{{ tab }}</a></li>
+                        </ul>
+                    </div>
+
+                    <div v-for="tab in pivotTabs" v-show="activeTab == tab">
+                        <div class="field " v-for="field in pivotFields" v-if="field.tab == tab || (!field.tab & tab == 'Основные параметры')">
+                            <label class="label">{{ field.caption }}</label>
+                            <div class="control">
+                                <crud-textbox v-if="field.type === fieldTypes.TEXTBOX" v-model="pivotRow[field.name]" :field="field"></crud-textbox>
+                                <crud-checkbox v-if="field.type === fieldTypes.CHECKBOX" v-model="pivotRow[field.name]" :field="field"></crud-checkbox>
+                                <crud-textarea v-if="field.type === fieldTypes.TEXTAREA" v-model="pivotRow[field.name]" :field="field"></crud-textarea>
+                                <crud-datepicker v-if="field.type === fieldTypes.DATEPICKER" v-model="pivotRow[field.name]" :field="field"></crud-datepicker>
+                                <crud-colorbox v-if="field.type === fieldTypes.COLORBOX" v-model="pivotRow[field.name]" :field="field"></crud-colorbox>
+                                <crud-image v-if="field.type === fieldTypes.IMAGE" v-model="pivotRow[field.name]" :field="field"></crud-image>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button" @click="modalCancel">Закрыть</button>
+                </footer>
+            </div>
+        </div>
+
+    </div>
+</template>
+
+<script>
+    import CrudUtils from './../utils';
+    import CrudBuilder from './../builder';
+    import CrudTypes from './../../utils/types';
+    import FieldTypes from './../utils/field-types';
+
+    /*** components ***/
+    import VueCrudTextbox from './crud-textbox.vue';
+    import VueCrudCheckbox from './crud-checkbox.vue';
+    import VueCrudTextarea from './crud-textarea.vue';
+    import VueCrudColorbox from './crud-colorbox.vue';
+    import VueCrudDatepicker from './crud-datepicker.vue';
+    import VueCrudRichedit from './crud-richedit.vue';
+    import VueCrudTable from './crud-table.vue';
+    import VueCrudDropdown from './crud-dropdown.vue';
+    import VueCrudImage from './crud-image.vue';
+
+    export default {
+        components: {
+            'crud-table': VueCrudTable,
+            'crud-textbox': VueCrudTextbox,
+            'crud-checkbox': VueCrudCheckbox,
+            'crud-textarea': VueCrudTextarea,
+            'crud-colorbox': VueCrudColorbox,
+            'crud-datepicker': VueCrudDatepicker,
+            'crud-dropdown': VueCrudDropdown,
+            'crud-image': VueCrudImage
+        },
+        name: 'crud-relation-many',
+        model: {
+            prop: "items",
+            event: "change"
+        },
+        props: {
+            crudCode: { type: String },
+            items: { type: Array },
+            field: {
+                type: Object
+            },
+            item: {}
+        },
+        data: function () {
+            return {
+                crud: {},
+                activeTab: '',
+                pivotRow: {},
+                modalForm: {
+                    active : false,
+                    onSuccess: null
+                },
+            }
+        },
+        computed: {
+            crudTypes(){
+                return CrudTypes;
+            },
+            pivotFields(){
+                return this.field.relation.pivot.fields;
+            },
+            tableActions(){
+
+                let actions = ['delete'];
+
+                if (this.field.relation.pivot){
+                    actions.splice(actions.length, 0, 'edit');
+                }
+
+                return actions;
+            },
+            pivotTabs(){
+                return _.keys(_.groupBy(this.pivotFields, (f)=> f.tab ? f.tab : "Основные параметры"));
+            },
+            fieldTypes(){
+                return FieldTypes;
+            }
+        },
+        methods: {
+
+            /***************************************** tabs ***************************/
+
+            setActiveTab(tabName){
+                this.activeTab = tabName;
+            },
+
+
+            /***************************************** end tabs ***************************/
+
+            /***************************************** modal edit form ***************************/
+
+            showModalForm(onSuccess){
+                if (this.field.readonly)
+                {
+                    toastr.info("Редактирование запрещено");
+                    return;
+                }
+
+                this.activeTab = this.pivotTabs[0];
+                this.modalForm.onSuccess = onSuccess;
+                this.modalForm.active = true;
+            },
+            modalSuccess(){
+                if (this.modalForm.onSuccess) this.modalForm.onSuccess();
+                this.modalCancel();
+            },
+            modalCancel(){
+                this.modalForm.onSuccess = null;
+                this.modalForm.active = false;
+            },
+
+            /***************************************** end modal edit form ***************************/
+
+            delAllItems(){
+                if (this.field.readonly)
+                {
+                    toastr.info("Редактирование запрещено");
+                    return;
+                }
+
+                this.emitChanges([]);
+            },
+            deleteItem(item){
+                if (this.field.readonly)
+                {
+                    toastr.info("Редактирование запрещено");
+                    return;
+                }
+
+                let items = _.filter(this.items, (i) => i[this.crud.id] !== item[this.crud.id]);
+                this.emitChanges(items);
+            },
+            editItem(item){
+                if (this.field.readonly)
+                {
+                    toastr.info("Редактирование запрещено");
+                    return;
+                }
+
+                this.pivotRow = item.pivot;
+                this.showModalForm();
+            },
+            emitChanges(items){
+                if (this.field.readonly)
+                {
+                    toastr.info("Редактирование запрещено");
+                    return;
+                }
+
+                this.$emit("change", items);
+            },
+            addItems(){
+                if (this.field.readonly)
+                {
+                    toastr.info("Редактирование запрещено");
+                    return;
+                }
+
+
+                if (this.crud)
+                {
+
+                    let crudEditor = new CrudBuilder( this.crud, CrudTypes.PICK_MANY )
+                        .onPick((values)=> {
+                            this.mergedItems(values);
+                        })
+                        .onGetItem(()=>this.item)
+                        .build();
+
+                    crudEditor.show();
+
+                } else {
+                    toastr.error("Не определена CRUD форма");
+                }
+            },
+            mergedItems(pickedItems){
+
+                if(pickedItems && pickedItems.length > 0){
+
+                    _.map(pickedItems, (i)=>{
+                        if (i.isSelected){
+                            i.isSelected = false;
+                        }
+
+                        if (this.field.relation.pivot){
+
+                            let emptyPivot = CrudUtils.createMetaObject(this.field.relation.pivot);
+                            this.$set(i, 'pivot', emptyPivot);
+
+                        }
+
+                        return i;
+                    });
+
+                    let items = this.items;
+
+                    items.splice(items.length, 0, ...pickedItems);
+
+                    items = _.uniqBy(items, this.crud.id);
+
+                    this.emitChanges(items);
+
+                }
+            }
+        },
+        beforeMount(){
+            this.crud = AdminManager.getCrud(this.crudCode);
+        },
+        mounted() {
+
+        }
+    }
+</script>

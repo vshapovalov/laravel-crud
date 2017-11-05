@@ -1,0 +1,29 @@
+@import './../../../node_modules/bulma/bulma';
+
+.crud-tree-item {
+
+  margin: 5px 0 5px 20px;
+
+  &>.box{
+    &:hover {
+      background-color: $table-row-hover-background-color;
+    }
+
+    i {
+      color: #d0d0d0;
+      &:before {
+        color: #d0d0d0;
+      }
+    }
+
+    margin-bottom: 0;
+  }
+
+}
+
+.label {
+  small {
+    font-weight: 400;
+  }
+}
+
