@@ -18,5 +18,12 @@
         "psr-4": {
             "Vshapovalov\\Crud\\": "src/"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Vshapovalov\\Crud\\CrudServiceProvider"
+            ]
+        }
     }
 }
