@@ -99,6 +99,7 @@ There is still a lot of work ahead - roles, localization, widgets, etc. ;]
   'visibility' => [ 'browse', 'edit', 'add' ], // visibility and state of control in crud table and edit panel
   'tab'        => 'Основные параметры', // tab name for control in edit panel
   'validation' => 'required|string:255', // laravel validation rule, except relation field type
+  'description'=> 'введите уникальный пароль', // field description for control label
   'readonly'   => true, // is field readonly on editpanel in [edit, add] states
   'additional' => [], // additional control options
   'relation' => [], // options for fields of relation type
