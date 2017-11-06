@@ -9,7 +9,7 @@ Manage your data
 
 Store files in media library
 
-![crud nedia](http://i58.photobucket.com/albums/g266/vshapovalov/crud-table_zpsdfpfsrq0.png)
+![crud nedia](http://i58.photobucket.com/albums/g266/vshapovalov/media-library_zpsposndcpx.png)
 
 ## Crud admin has
   
