@@ -9,8 +9,6 @@ Manage your data
 
 Store files in media library
 
-![crud nedia](http://i58.photobucket.com/albums/g266/vshapovalov/crud-table_zpsdfpfsrq0.png)
-
 ## Crud admin has
   
 - textbox (password, masked, slugify)
@@ -59,8 +57,8 @@ Check http://app_url/cruds
 
 ## How it works
 
-Just declare crud for your eloquent model in config/cruds.php and refresh crud admin page
-
+- inherit your eloquent model from CrudModel or use RelashionshipTrait[, TreeableTrait]
+- declare crud for your model in config/cruds.php and refresh crud admin page
 
 There is still a lot of work ahead - roles, localization, widgets, etc. ;]
 
@@ -99,6 +97,7 @@ There is still a lot of work ahead - roles, localization, widgets, etc. ;]
   'visibility' => [ 'browse', 'edit', 'add' ], // visibility and state of control in crud table and edit panel
   'tab'        => 'Основные параметры', // tab name for control in edit panel
   'validation' => 'required|string:255', // laravel validation rule, except relation field type
+  'description'=> 'введите уникальный пароль', // field description for control label
   'readonly'   => true, // is field readonly on editpanel in [edit, add] states
   'additional' => [], // additional control options
   'relation' => [], // options for fields of relation type
