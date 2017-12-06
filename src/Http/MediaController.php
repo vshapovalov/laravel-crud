@@ -16,38 +16,12 @@ class MediaController extends BaseController
 
 	function __construct() {
 		$this->fileTypes = ['jpeg', 'jpg', 'png'];
-
-		$this->settings = [
-			'resize' => [
-				'width' => 1000,
-				'height' => null,
-				'quality' => 90
-			],
-			'thumbnails' => [
-				[
-					'name' => 'medium',
-					'scale' => 50
-				],
-				[
-					'name' => 'small',
-					'scale' => 25
-				],
-				[
-					'name' => 'cropped',
-					'crop' => [
-						'width' => 250,
-						'height' => 250,
-					]
-				]
-			]
-		];
+		$this->settings = config('cruds.media_default_settings', []);
 
 		$this->middleware('auth');
 	}
 
 	function putMedia(request $request){
-
-    	debug($request->input('root_id'));
 
     	if ($request->input('root_id') == 'root'){
 		    $parentFolder = MediaItem::whereNull('parent_id')->first();
@@ -57,7 +31,15 @@ class MediaController extends BaseController
 
 	    $files = [];
 
+		debug((array)$request->input('media_settings'));
+		$media_settings = json_decode($request->input('media_settings','{}'), true);
+
+    	if (count($media_settings))
+    		$this->settings = $media_settings;
+
 		foreach ($request->allFiles() as $file){
+
+
 
 			$fileName = $file->getClientOriginalName();
 
@@ -140,16 +122,12 @@ class MediaController extends BaseController
 						    $image->save(
 							    storage_path().'/app/public/uploads/' . $thumbFilename,
 							    $quality);
-
 					    }
 				    }
 
 				    $image->destroy();
 			    }
-
 		    }
-
-
 	    }
 
 	    return ['success' => true, 'message' => implode(', ', $files)];

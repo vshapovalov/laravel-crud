@@ -10,6 +10,17 @@ export default class CrudApi {
 
         return axios.get(apiUrls.crud.BASE + apiUrls.crud.LIST);
     }
+
+    static getConfig(){
+
+        return axios.get(apiUrls.crud.BASE + apiUrls.config);
+    }
+
+    static menuList(){
+
+        return axios.get(apiUrls.crud.BASE + apiUrls.menu.LIST);
+    }
+
     static crudTreeMove(code,data){
 
         return axios.post(this.getUrlByCrud(code) + apiUrls.crud.TREE_MOVE, data);

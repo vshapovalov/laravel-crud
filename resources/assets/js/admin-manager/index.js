@@ -6,30 +6,27 @@ export default class AdminManager{
 
         this.managerSelector = managerSelector;
         this.workspaceSelector = workspaceSelector ? workspaceSelector : '#workspace';
-        this.cruds = [];
+        this.cruds = {};
         let _this = this;
-
         this.managerInstance = new Vue({
             el: this.managerSelector,
-            template: "<admin-manager :cruds='cruds'></admin-manager>",
-            data: {
-                cruds: _this.cruds
-            }
+            template: "<admin-manager ></admin-manager>",
         });
 
-        this.requestCruds();
-
+        this.requestConfig();
     }
 
-    requestCruds(){
+    requestConfig(){
 
-        AdminApi.crudList()
+        AdminApi.getConfig()
             .then((resp)=>{
-                this.cruds = resp.data;
-                this.managerInstance.cruds = this.cruds;
+                _.each(resp.data.list, (item)=>{
+                    this.cruds[item.code] = item;
+                });
+                this.managerInstance.$emit('config:loaded', resp.data);
             })
             .catch((error)=>{
-                toastr.error(error, 'Не удалось получить список CRUD!');
+                toastr.error(error, 'Не удалось получить конфигурацию!');
             });
 
     }
@@ -43,8 +40,11 @@ export default class AdminManager{
     }
 
     getCrud(crudCode){
-
         return this.cruds[crudCode];
+
+    }
+
+    mount(){
 
     }
 

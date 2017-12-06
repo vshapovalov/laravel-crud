@@ -144,7 +144,13 @@
 
                 if (this.mode === "multi") formBehavior = FormBehaviorTypes.PICK_MANY;
 
-                new LibraryBuilder(formBehavior).onPick(this.onPick).build().show();
+                console.log(this.field);
+
+                new LibraryBuilder(formBehavior)
+                    .setCrudField(this.field)
+                    .onPick(this.onPick)
+                    .build()
+                    .show();
             },
             deleteImage(index){
                 if (this.field.readonly)

@@ -1,82 +1,148 @@
 <template>
     <div class="">
-        <div class="columns">
-            <div class="column is-2">
-                <nav class="panel">
-                    <p class="panel-heading">
-                        Админ.панель
-                    </p>
-                    <div class="panel-block">
-                        <a @click.stop.prevent="openMediaLibrary">Медиа библиотека</a>
-                    </div>
-                    <div class="panel-block" v-for="crud in visibleCruds"><a @click.stop.prevent="openCrud(crud)">{{ crud.name }}</a></div>
-                </nav>
+        <div class="admin-header">
+            <div class="logo">
+                <a href="javascript:;">Админ.панель</a>
             </div>
-            <div id="workspace" class="column">
-
+            <div class="header-content"></div>
+        </div>
+        <div class="admin-container">
+            <div class="sidebar">
+                <menu-item key="menuItem.name" v-for="menuItem in menu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
             </div>
+            <div id="workspace" class="content"></div>
         </div>
     </div>
 </template>
 
 <script>
 
-    import MediaBuilder from './../media/builder';
-    import CrudBuilder from './../crud/builder';
+    import MenuItem from './menu-item.vue';
+    import MediaLibrary from './../media/library';
+    import CrudUtils from './../crud/utils';
+    import CrudEditor from './../crud/editor';
     import FormBehaviorTypes from './../utils/types';
 
-    // TODO: check for auth
+    // TODO: check for auth type
 
     export default {
         name: 'admin-manager',
-        props: ['cruds'],
         data: function () {
             return {
-                activeInstance: undefined
+                activeInstance: undefined,
+                cruds: {},
+                menu: [],
+                additionalComponents: [],
+                additionalComponentsLoaded: 0
             }
         },
-        computed: {
-            visibleCruds(){
-                return _.filter(this.cruds, (c) => c.visible);
-            },
-            crudGroups(){
-                return _.uniq(_.filter(_.map(this.visibleCruds, (c)=> c.group ? c.group : ''), (g)=> g!==''));
-            },
-            crudsWithoutGroup(){
-                return _.filter(this.visibleCruds, (c)=>!c.group);
-            },
-
+        components:{
+            'menu-item': MenuItem
         },
         methods:{
-            getCrudsByGroup(groupName){
-                return _.filter(this.visibleCruds, (c)=>c.group === groupName);
-            },
-
-
-
             closeActiveInstance(){
                 if (this.activeInstance) {
                     this.activeInstance.close();
                 }
             },
 
-            openMediaLibrary(){
+            setActiveInstance(instance){
                 this.closeActiveInstance();
-                this.activeInstance = new MediaBuilder(FormBehaviorTypes.BROWSE).build();
-                this.activeInstance.show();
+                this.activeInstance = instance;
+            },
+
+            mountActiveInstance(){
+                if (this.activeInstance){
+                    let elemetId = 'component' + CrudUtils.randomInteger(1, 10000);
+
+                    $(AdminManager.getWorkspaceSelector()).append(`<div id="${elemetId}"></div>`);
+
+                    this.activeInstance.show(elemetId);
+                }
+            },
+
+            emitMenuAction(menuItem){
+                Bus.$emit(menuItem.action, menuItem.action, menuItem.caption);
 
             },
-            openCrud(crud){
+
+            mountMediaLibrary(){
+                let instance = new MediaLibrary(null, FormBehaviorTypes.BROWSE, null ,null, null);
+                Bus.$emit('admin:instance:mount', instance);
+            },
+            mountCrud(action){
+                let crudCode = action.split(':')[1];
+
+                let crud = AdminManager.getCrud(crudCode);
+
+                let instance = new CrudEditor(null, crud,  FormBehaviorTypes.BROWSE, null, null, null);
+                Bus.$emit('admin:instance:mount', instance);
+            },
+            onInstanceMounted(instance){
                 this.closeActiveInstance();
-                this.activeInstance = new CrudBuilder(crud, FormBehaviorTypes.BROWSE).build();
-                this.activeInstance.show();
+                this.setActiveInstance(instance);
+                this.mountActiveInstance();
+            },
+            onUrlRender(url){
+
+            },
+            onUrlGo(url){
+                window.location = url;
+            },
+
+            onConfigLoaded(config){
+                this.cruds = config.list;
+                this.menu.splice(0,0,...config.menu);
+                this.additionalComponents.splice(0,0,...config.components);
+                this.registerDefaultComponents();
+                if (this.additionalComponents.length > 0){
+                    this.registerUserComponents()
+                        .then(()=>{ this.mountDefaultComponent() });
+                } else {
+                    this.mountDefaultComponent();
+                }
+
+            },
+
+            mountDefaultComponent(){
+                let defaultMenu = _.first(_.filter(this.menu, (m)=>m.default));
+                if (defaultMenu){
+                    this.emitMenuAction(defaultMenu);
+                }
+            },
+
+            registerDefaultComponents(){
+                Bus.$on('medialibrary:mount', this.mountMediaLibrary);
+
+                _.each(this.cruds, (crud)=>{
+                    Bus.$on(`crud:${crud.code}:mount`, this.mountCrud);
+                });
+            },
+            registerUserComponents(){
+                return new Promise((resolve, reject)=>{
+                    let body = document.querySelector('body');
+
+                    _.each(this.additionalComponents, (cmp)=>{
+                        let scriptEl = document.createElement('script');
+                        body.appendChild(scriptEl);
+                        scriptEl.setAttribute('type', 'text/javascript');
+                        scriptEl.setAttribute('async', true);
+                        scriptEl.onload = ()=>{ if (++this.additionalComponentsLoaded) resolve()};
+                        scriptEl.setAttribute('src', cmp.path);
+                    });
+                });
+
             }
         },
         beforeMount(){
 
+            // register admin manager events
+            Bus.$on('admin:instance:mount', this.onInstanceMounted);
+            Bus.$on('admin:url:render', this.onUrlRender);
+            Bus.$on('admin:url:go', this.onUrlGo);
         },
         mounted(){
-
+            this.$root.$on('config:loaded', this.onConfigLoaded);
         }
     }
 </script>

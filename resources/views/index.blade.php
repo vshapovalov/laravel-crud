@@ -5,18 +5,10 @@
 
 @endsection
 
-@section('styles')
-    @parent
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-
-@endsection
-
 @section('content')
 
-    <section class="section" >
-        <div class="container is-fluid">
-            <div id="admin-manager"></div>
-        </div>
-    </section>
-
+    <div class="page-wrapper">
+        <div id="admin-manager"></div>
+    </div>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" lazyload>
 @endsection

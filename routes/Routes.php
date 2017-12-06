@@ -16,7 +16,9 @@ Route::group(['namespace' => '\\Vshapovalov\\Crud\\Http\\Controllers', 'as' => '
 	$namespacePrefix = '\\Vshapovalov\\Crud\\Http\\Controllers\\';
 
 	Route::get('/', ['as' => 'admin', 'uses' => $namespacePrefix.'CrudController@getAdminIndex']);
+	Route::get('config', ['uses' => $namespacePrefix.'CrudController@getCrudConfig']);
 	Route::get('list', ['uses' => $namespacePrefix.'CrudController@getCrudList']);
+	Route::get('menu/list', ['uses' => $namespacePrefix.'CrudController@getMenuList']);
 	Route::get('{code}/test', ['uses' => $namespacePrefix.'CrudController@getItemsListTest']);
 	Route::post('{code}/items', ['uses' => $namespacePrefix.'CrudController@getItemsList']);
 	Route::get('{code}/get', ['uses' => $namespacePrefix.'CrudController@getItemsList']);

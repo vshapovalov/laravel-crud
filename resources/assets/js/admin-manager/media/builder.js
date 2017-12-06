@@ -5,10 +5,16 @@ export default class MediaLibraryBuilder{
     constructor(type){
         this.type = type;
         this.workspaceSelector = AdminManager.getWorkspaceSelector();
+        this.crudField = null;
     }
 
     onPick(pickCallback){
         this.pickCallback = pickCallback;
+        return this;
+    }
+
+    setCrudField(crudField){
+        this.crudField = crudField;
         return this;
     }
 
@@ -26,11 +32,9 @@ export default class MediaLibraryBuilder{
 
         let elemetId = 'medialibrary' + Utils.randomInteger(1, 10000);
 
-        console.log('MEDIA BUILDER: ' + this.workspaceSelector);
-
         $(this.workspaceSelector).append(`<div id="${elemetId}"></div>`);
 
-        return new Library(elemetId, this.type, this.pickCallback, this.cancelCallback);
+        return new Library(elemetId, this.type, this.pickCallback, this.cancelCallback, this.crudField);
     }
 
 }

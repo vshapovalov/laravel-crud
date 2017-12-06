@@ -33,6 +33,16 @@ class CrudController extends BaseController
 		return Crud::getCrudList();
 	}
 
+	function getCrudConfig(){
+
+		return Crud::getCrudConfig();
+	}
+
+	function getMenuList(){
+
+		return Crud::getMenuList();
+	}
+
 	function getItemsListTest($code, Request $request){
 		return [
 			'items' => Crud::getCrudItemsList($code, [])
@@ -42,7 +52,10 @@ class CrudController extends BaseController
 	function getItemsList($code, Request $request){
 
 		return [
-			'items' => Crud::getCrudItemsList($code, $request->input('item', []))
+			'items' => Crud::getCrudItemsList(
+				$code,
+				$request->input('item', []),
+				$request->input('sort', [ 'field' => '']))
 		];
 
 	}

@@ -2,7 +2,7 @@
     <table class="table">
         <thead>
         <tr>
-            <th class="" v-for="field in crudBrowsableFields">{{ field.caption }}</th>
+            <th data-role="button" v-for="field in crudBrowsableFields" @click.stop="sort(field)">{{ field.caption }}</th>
             <th>Действия</th>
         </tr>
         </thead>
@@ -45,7 +45,7 @@
                 'default': ()=>['edit', 'delete']
             },
             withPivot: {},
-            pivotFields: {}
+            pivotFields: {},
         },
         data: function () {
             return {
@@ -105,6 +105,9 @@
 
                 this.$emit('delete', item);
 
+            },
+            sort(field){
+                this.$emit('sort', field.name);
             }
         },
         mounted() {
@@ -112,3 +115,4 @@
         }
     }
 </script>
+

@@ -6,7 +6,7 @@
             <div :class="{'container': isPickMode, 'is-fluid': isPickMode}">
                     <div class="panel">
                             <div class="panel-heading">
-                            <p class="title is-5">Медиа библиотека</p>
+                            <p class="title is-5">{{ title }}</p>
                         </div>
                         <div class="panel-block">
                             <div class="">
@@ -156,6 +156,10 @@
             },
             type:{
                 type: String
+            },
+            crudField:{
+                type: Object,
+                default: null
             }
         },
         data: function () {
@@ -179,7 +183,8 @@
                     state: EditStates.NONE,
                     onApprove: undefined
                 },
-                baseUrl: ''
+                baseUrl: '',
+                title: 'Медиа библиотека'
             }
         },
         computed: {
@@ -332,7 +337,10 @@
                 if (this.currentItem){
 
                     this.showModal('Удаление', 'Подтвердите удаление ' + this.currentItem.title, ()=>{
-                        CrudApi.mediaItemsDelete({item: this.currentItem})
+                        CrudApi.mediaItemsDelete({
+                            item: this.currentItem,
+                            media_settings: this.crudField && this.crudField.additional ? this.crudField.additional : {}
+                        })
                         .then(()=>{
                             this.getItems();
                             toastr.success('Успешно удалено');
@@ -418,6 +426,8 @@
         },
         beforeMount(){
 
+            if (this.crudField) this.title = 'Редактирование - ' + this.crudField.caption;
+
             if (mediaPath && _.isArray(mediaPath) && mediaPath.length){
                 this.path.splice(0,0, ...mediaPath);
                 this.getItems();
@@ -426,8 +436,6 @@
             }
         },
         mounted() {
-
-
 
             $(this.$refs.upload).dropzone({
                 url: CrudUrls.media.UPLOAD,
@@ -445,6 +453,9 @@
                 sending: (file, xhr, formData) => {
                     formData.append("_token", CSRF_TOKEN);
                     formData.append("root_id", this.currentFolder.id);
+                    if (this.crudField && this.crudField.additional &&
+                        (this.crudField.additional.resize || this.crudField.additional.thumbnails))
+                        formData.append("media_settings", JSON.stringify(this.crudField.additional));
                 },
                 success: function(e, res){
                     if(res.success){

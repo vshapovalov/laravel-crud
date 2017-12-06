@@ -31,7 +31,7 @@ class CrudServiceProvider extends ServiceProvider
 	    $loader->alias('Crud', CrudFacade::class);
 
     	$this->app->singleton('crud', function () {
-    		return new Crud(config('cruds.list'));
+    		return new Crud();
 	    });
 
     	$this->loadHelpers();

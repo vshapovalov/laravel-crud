@@ -1,19 +1,25 @@
 import VueMediaLibrary from './components/media-library.vue';
 
 export default class MediaLibrary {
-    constructor(selector, type, onPick, onCancel){
+    constructor(selector, type, onPick, onCancel, crudField){
         this.selector = selector;
         this.type = type;
         this.onPick = onPick;
         this.onCancel = onCancel;
+        this.crudField = crudField;
 
+
+    }
+
+    createLibrary(){
         let _this = this;
 
         this.library =  new Vue({
-            template: '<media-library id="' + _this.selector + '" :active="active" :type="type" @pick="onPick" @cancel="onCancel"></media-library>',
+            template: '<media-library id="' + _this.selector + '" :active="active" :type="type" :crud-field="crudField" @pick="onPick" @cancel="onCancel"></media-library>',
             data: {
                 type: _this.type,
-                active: true
+                active: true,
+                crudField: _this.crudField
             },
             watch: {
                 active: {
@@ -50,8 +56,15 @@ export default class MediaLibrary {
         });
     }
 
-    show(){
-        this.library.$mount('#'+this.selector);
+    show(elementId){
+
+        if (elementId){
+            this.selector = elementId;
+        }
+
+        this.createLibrary();
+
+        this.library.$mount('#' + this.selector);
 
         return this.library;
     }

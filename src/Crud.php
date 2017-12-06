@@ -8,15 +8,22 @@ use Vshapovalov\Crud\Models\MenuItem;
 
 class Crud {
 
+	protected $config = [];
 	protected $cruds = [];
+	protected $menu = [];
 
 	protected $settings = null;
 	protected $menuItems = null;
 
-	function __construct($cruds) {
+	function __construct() {
+		$this->config = config('cruds');
+		$cruds = $this->config['list'];
+
 		foreach($cruds as $crud){
 			$this->cruds[$crud['code']] = $crud;
 		}
+
+		$this->menu = $this->config['list'];
 	}
 
 	public function routes()
@@ -36,6 +43,14 @@ class Crud {
 
 	function getCrudList(){
 		return $this->cruds;
+	}
+
+	function getCrudConfig(){
+		return $this->config;
+	}
+
+	function getMenuList(){
+		return $this->config['menu'];
 	}
 
 	function getCrudByCode($code){
@@ -130,7 +145,7 @@ class Crud {
 		return view($viewName ? $viewName : 'crud::menu', ['menuItem' => $menu])->render();
 	}
 
-	function getCrudItemsList($crud, $inputItem){
+	function getCrudItemsList($crud, $inputItem, $sortOptions){
 
 		if (is_string($crud))
 			$crud = $this->getCrudByCode($crud);
@@ -170,6 +185,10 @@ class Crud {
 
 				}
 			}
+		}
+
+		if ($sortOptions['field'] <> ''){
+			$qb->orderBy($sortOptions['field'], $sortOptions['type']);
 		}
 
 		return $qb->get();

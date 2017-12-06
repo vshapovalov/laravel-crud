@@ -32,6 +32,14 @@ window.slugify = require('slugify');
 
 window.Vue = require('vue');
 
+window.Bus = new Vue({
+    data: {
+
+    },
+    created(){
+        console.log('bus created');
+    }
+});
 
 Vue.component('admin-manager', require('./admin-manager/components/admin-manager.vue'));
 Vue.component('crud-table', require('./admin-manager/crud/components/crud-table.vue'));
@@ -58,6 +66,5 @@ $(document).ready(function(){
     "use strict";
 
     window.AdminManager = new AdminManager('#admin-manager');
-
 });
 

@@ -20,7 +20,7 @@
                     <div class="panel-block">
                         <crud-table v-if="crud.type === 'list'" class="is-fullwidth" :items="items"
                                     :crud="crud" :type="editorType" @edit="editItem" @delete="deleteItem"
-                                    @select="selectItems"></crud-table>
+                                    @select="selectItems" @sort="onSortItems"></crud-table>
                         <crud-tree v-else-if="crud.type === 'tree'" :items="items" :crud="crud" :type="editorType"
                                    @edit="editItem" @delete="deleteItem" @select="selectItems"
                                    @change="onTreeChange"></crud-tree>
@@ -59,7 +59,6 @@
     import RowWrapper from './../utils/row-wrapper';
 
     // TODO: refactor modal form to component
-    // TODO: check for require fields
 
     export default {
         name: 'crud-editor',
@@ -87,8 +86,9 @@
                     text: '',
                     state: CrudTypes.BROWSE,
                     onApprove: undefined
-                }
-
+                },
+                sortField: '',
+                sortType: 'asc'
             }
         },
 
@@ -238,9 +238,26 @@
                 this.selectedItems = items;
             },
 
+            onSortItems(fieldName){
+                if (this.sortField === fieldName) {
+                    if (this.sortType === 'asc'){
+                        this.sortType = 'desc';
+                    }
+                    else {
+                        this.sortType = 'asc';
+                    }
+                } else {
+                    this.sortType = 'asc'
+                }
+
+                this.sortField = fieldName;
+
+                this.getList();
+            },
+
             getList(){
 
-                CrudApi.crudGetItems(this.crud.code, { item: this.item})
+                CrudApi.crudGetItems(this.crud.code, { item: this.item, sort: { field: this.sortField, type: this.sortType }})
                     .then((response)=>{
 
                         this.items = response.data.items;

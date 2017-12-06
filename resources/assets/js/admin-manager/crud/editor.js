@@ -9,7 +9,9 @@ export default class CrudEditor {
         this.onPick = onPick;
         this.onCancel = onCancel;
         this.inputItem = onGetItem ? onGetItem() : undefined;
+    }
 
+    createEditor(){
         let _this = this;
 
         this.editor =  new Vue({
@@ -55,8 +57,16 @@ export default class CrudEditor {
         return this.editor.data;
     }
 
-    show(){
-        this.editor.$mount('#'+this.crudSelector);
+    show(elementId){
+
+        if (elementId){
+            this.crudSelector = elementId;
+        }
+
+
+        this.createEditor();
+
+        this.editor.$mount('#'+ this.crudSelector);
 
         return this.editor;
     }

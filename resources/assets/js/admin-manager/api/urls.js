@@ -1,4 +1,5 @@
 export default {
+    config: 'config',
     crud: {
         BASE: baseUrl + '/' + crudPrefix + '/',
         LIST: 'list',
@@ -6,6 +7,9 @@ export default {
         SAVE_ITEM: '/edit',
         DELETE_ITEM: '/delete/',
         GET_ITEMS: '/items',
+    },
+    menu:{
+        LIST: 'menu/list'
     },
     media: {
         BASE: baseUrl + '/' + mediaPrefix + '/',
