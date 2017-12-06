@@ -4,9 +4,6 @@ Builded with <a href="https://vuejs.org" target="_blank">Vue.js</a>, <a href="ht
 
 Manage your data
 
-![crud table](http://i58.photobucket.com/albums/g266/vshapovalov/crud-table_zpsdfpfsrq0.png)
-![crud edit panel](http://i58.photobucket.com/albums/g266/vshapovalov/edit-panel_zpseslpfk7v.png)
-
 Store files in media library
 
 ## Crud admin has
@@ -60,7 +57,7 @@ Check http://app_url/cruds
 - inherit your eloquent model from CrudModel or use RelashionshipTrait[, TreeableTrait]
 - declare crud for your model in config/cruds.php and refresh crud admin page
 
-There is still a lot of work ahead - roles, localization, widgets, etc. ;]
+There is still a lot of work ahead - roles, localization, etc. ;]
 
 ### Crud options
 
@@ -122,7 +119,34 @@ There is still a lot of work ahead - roles, localization, widgets, etc. ;]
 
 **richedit** - richeditor by tinymce
 
-**image** - image picker, based on crud media library, has additional options ['mode' => ['single', 'multi']] // 'multi' is default
+**image** - image picker, based on crud media library, has additional options 
+```php
+[
+    'mode' => 'multi', // multi or single, 'multi' is default
+    'resize' => [
+            'width' => 1000,
+            'height' => null,
+            'quality' => 90
+        ],
+    'thumbnails' => [
+        [
+            'name' => 'medium',
+            'scale' => 50
+        ],
+        [
+            'name' => 'small',
+            'scale' => 25
+        ],
+        [
+            'name' => 'cropped',
+            'crop' => [
+                'width' => 250,
+                'height' => 250,
+            ]
+        ]
+    ] 
+]
+```
 
 **dynamic** - field type depends on other crud model field, field has options
 
@@ -167,4 +191,88 @@ There is still a lot of work ahead - roles, localization, widgets, etc. ;]
       ]
     ]
   ]
+```
+
+### Media library
+
+
+Media library can resize, create thumbnails for uploaded images by default settings, also crud image field have additional options for resize image
+```php
+'media_default_settings' => [
+    /* for example
+        'resize' => [
+            'width' => 1000,
+            'height' => null,
+            'quality' => 90
+        ],
+        'thumbnails' => [
+            [
+                'name' => 'medium',
+                'scale' => 50
+            ],
+            [
+                'name' => 'small',
+                'scale' => 25
+            ],
+            [
+                'name' => 'cropped',
+                'crop' => [
+                    'width' => 250,
+                    'height' => 250,
+                ]
+            ]
+        ]
+    */
+],
+```
+
+### Menu options
+
+Menu section contains menu items:
+
+```php
+[
+    // unique name of menu item
+    'name' => 'media-library',
+
+    // caption of menu item
+    'caption' => 'Медиа библиотека',
+
+    // bus event name, 'medialibrary:mount' is default for media library,
+    // 'crud:%crudcode%:mount' is default for cruds
+    'action' => 'medialibrary:mount'
+
+    // this component will be mount after admin panel loaded
+    'default' => true,
+
+    // items can be grouped
+    // array of nested items, contains same item
+    // nested items can contains items too
+    'items' => [
+
+    ]
+],
+```
+
+Also you can use own Vue components(some widgets), just add them in components and menu sections.
+User component can use vue, lodash, axios, jquery, because they are bundled in admin.js and declared as window obj props
+
+```php
+'components' => [
+    [
+        'name' => 'test-component', // just simple name
+        'path' => '/js/test-components.js' // path to component, must be absolute
+    ]
+],
+```
+
+```php
+[
+    'name' => 'user_component',
+    'caption' => 'User component test',
+
+    // user component must be registered by action, which specified in user component script
+    // example of user component can be found in %package%/resource/assets/js/example-user-component/
+    'action' => 'user:testcomponent:mount'
+] 
 ```
