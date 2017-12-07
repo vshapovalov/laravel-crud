@@ -156,9 +156,19 @@ class Crud {
 
 		$relationships = array_keys($item->relationships());
 
+//		$fields = array_map(function($f){
+//			return $f['name'];
+//		},
+//			array_filter($crud['meta']['fields'], function($f){ return $f['type'] != 'relation'; })
+//		);
+//
+//		$qb->select($fields);
+
 		if (count($relationships)){
 			$qb = $qb->with($relationships);
 		}
+
+//		$qb->select($fields);
 
 		if (isset($crud['scopes']) && count($crud['scopes'])){
 
@@ -225,7 +235,7 @@ class Crud {
 				array_map( function ($val) {return $val['validation']; }, $validatingFields)
 			);
 
-		debug($validationRules);
+//		debug($validationRules);
 
 		if (count($validationRules)) {
 
@@ -297,11 +307,11 @@ class Crud {
 
 					if (isset($inputValues[$field['name']]) && !empty($inputValues[$field['name']])) {
 
-						$item->{$field['name']} = bcrypt($inputValues[$field['name']]);
+						$item[$field['name']] = bcrypt($inputValues[$field['name']]);
 					}
 				} else {
 
-					$item->{$field['name']} = $inputValues[$field['name']];
+					$item[$field['name']] = $inputValues[$field['name']];
 				}
 
 				continue;
@@ -309,49 +319,49 @@ class Crud {
 
 			if ($field['type'] == 'dropdown'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
 			if ($field['type'] == 'checkbox'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
 			if ($field['type'] == 'datepicker'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
 			if ($field['type'] == 'colorbox'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
 			if ($field['type'] == 'image'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
 			if ($field['type'] == 'textarea'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
 			if ($field['type'] == 'richedit'){
 
-				$item->{$field['name']} = $inputValues[$field['name']];
+				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
@@ -368,8 +378,8 @@ class Crud {
 
 				$relationCrud = $this->getCrudByCode($field['relation']['crud']);
 
-				debug($field['name']);
-				debug($field['relation']['type']);
+//				debug($field['name']);
+//				debug($field['relation']['type']);
 
 				/************************************ belongsTo ************************************/
 

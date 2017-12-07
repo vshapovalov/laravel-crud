@@ -90,6 +90,23 @@
                     value = this.item.pivot[this.field.name];
                 }
 
+                if (this.field.json) {
+
+                    let jPath = this.field.name.split('->');
+                    console.log('jPath', jPath);
+
+                    let tmpValue = this.item[jPath[0]];
+
+                    jPath.splice(0,1);
+
+                    _.each(jPath,(p)=>{
+                        tmpValue = tmpValue[p];
+                        console.log('jpathvalue', tmpValue);
+                    });
+
+                    value = tmpValue;
+                }
+
                 if (this.field.type === FieldTypes.DROPDOWN && this.field.additional) {
 
                     if (!this.field.additional.mode || this.field.additional.mode === 'single') {

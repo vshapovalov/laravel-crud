@@ -31,7 +31,7 @@ class MediaController extends BaseController
 
 	    $files = [];
 
-		debug((array)$request->input('media_settings'));
+//		debug((array)$request->input('media_settings'));
 		$media_settings = json_decode($request->input('media_settings','{}'), true);
 
     	if (count($media_settings))

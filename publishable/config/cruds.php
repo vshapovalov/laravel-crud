@@ -52,6 +52,7 @@
 		Crud field options:
 
 					'name'       => 'password' // model's field or relation name
+					'json'       => true, // indicates that field uses value of json field, in this case name must be like 'meta->bio->gender'
 					'caption'    => 'Пароль' // field caption for crud table and control
 					'type'       => 'textbox' // crud field type, control type
 					'visibility' => [ 'browse', 'edit', 'add' ] // visibility and state of control in crud table and edit panel
@@ -79,6 +80,16 @@
 					additional: ['mode' => ['date', 'datetime']]
 
 				richedit - richeditor by tinymce
+
+				dropdown - simple dropdown, has additional options
+
+					additional : [
+						'mode' => 'single', // single, multi
+						'values' => [
+							[ 'key' => 0, 'value' => 'DRAFT'],
+							[ 'key' => 1, 'value' => 'PUBLISHED']
+						]
+					]
 
 				image - image picker, based on crud media library, has additional options
 					additional: [

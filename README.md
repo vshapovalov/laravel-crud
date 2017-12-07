@@ -89,6 +89,7 @@ There is still a lot of work ahead - roles, localization, etc. ;]
 ```php
 [
   'name'       => 'password', // model's field or relation name
+  'json'       => true, // indicates that field uses value of json field, in this case name must be like 'meta->bio->gender' 
   'caption'    => 'Пароль', // field caption for crud table and control
   'type'       => 'textbox', // crud field type, control type
   'visibility' => [ 'browse', 'edit', 'add' ], // visibility and state of control in crud table and edit panel
@@ -100,6 +101,30 @@ There is still a lot of work ahead - roles, localization, etc. ;]
   'relation' => [], // options for fields of relation type
   'dynamic'    => [], // options for fields of dynamic type
 ]
+```
+
+also, if you using json field type, then cast model json prop to array
+
+```php
+
+class User extends Authenticatable
+{
+    use RelationshipsTrait;
+    
+    protected $casts = [
+        // name of json db field
+    	'meta' => 'array'
+    ];
+    
+    // use mutators for for pretty field access 
+    function getSexAttribute(){
+        return $this['meta->bio->gender'];
+    }
+    
+    function setSexAttribute($val){
+        $this['meta->bio->gender'] = $val;
+    }
+}
 ```
 
 ### Crud field types
@@ -116,6 +141,18 @@ There is still a lot of work ahead - roles, localization, etc. ;]
 **textarea** - simple textarea
 
 **datepicker** - date picker, has additional options ['mode' => ['date', 'datetime']]
+
+**dropdown** - simple dropdown, has additional options
+
+```php
+additional => [
+    'mode' => 'single', // single, multi
+    'values' => [
+        [ 'key' => 0, 'value' => 'DRAFT'],
+        [ 'key' => 1, 'value' => 'PUBLISHED']
+    ]
+]
+```
 
 **richedit** - richeditor by tinymce
 

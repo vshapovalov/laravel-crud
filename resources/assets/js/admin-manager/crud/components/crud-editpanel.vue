@@ -112,6 +112,27 @@
                     this.item[field.additional.slugify] = slugify(this.item[field.name]).toLowerCase();
                 }
             },
+
+            getFieldValue(field){
+                let value = this.item[field.name];
+
+                if (field.json) {
+                    let jPath = field.name.split('->');
+
+                    let tmpValue = this.item[jPath[0]];
+
+                    jPath.splice(0,1);
+
+                    _.each(jPath,(p)=>{
+                        tmpValue = tmpValue[p];
+                        console.log('jpathvalue', tmpValue);
+                    });
+
+                    value = tmpValue;
+                }
+
+                return value;
+            },
             getFieldType(field){
                 let result = '';
 

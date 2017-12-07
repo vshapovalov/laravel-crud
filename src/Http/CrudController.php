@@ -45,7 +45,7 @@ class CrudController extends BaseController
 
 	function getItemsListTest($code, Request $request){
 		return [
-			'items' => Crud::getCrudItemsList($code, [])
+			'items' => Crud::getCrudItemsList($code, [], [ 'field' => ''])
 		];
 	}
 

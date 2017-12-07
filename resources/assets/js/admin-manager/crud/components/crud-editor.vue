@@ -163,10 +163,32 @@
                         toastr.error(error, 'Не удалось обновить положение');
                     });
             },
+            spreadJsonFields(item){
+
+                console.log('spreadJsonFields', this.crud);
+
+                let jsonFields = _.filter(this.crud.meta.fields, (f)=>f.json);
+
+                _.each(jsonFields, (f)=>{
+
+                    let jPath = f.name.split('->');
+
+                    let tmpValue = item[jPath[0]];
+
+                    jPath.splice(0,1);
+
+                    _.each(jPath, (p)=>{
+                        tmpValue = tmpValue[p];
+                    });
+
+                    item[f.name] = tmpValue;
+                });
+            },
             editItem(item){
 
                 CrudApi.crudGetItem(this.crud.code, item[this.crud.id])
                     .then((response)=>{
+                        this.spreadJsonFields(response.data);
                         this.editingRow = response.data;
                         this.prepareEditPanel(States.EDIT);
                     })
@@ -179,7 +201,6 @@
                 this.state = States.BROWSE;
             },
             saveRow(){
-
                 CrudApi.crudSaveItem(this.crud.code, { item: this.editingRow})
                     .then((response)=>{
 
