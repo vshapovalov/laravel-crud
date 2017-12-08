@@ -151,6 +151,14 @@
             },
             addRow(){
                 this.editingRow = CrudUtils.createMetaObject(this.crud.meta);
+
+                // set default values
+                let fieldsWithDefaults = _.filter(this.crud.meta.fields, (f)=>f.hasOwnProperty('by_default'));
+
+                _.each(fieldsWithDefaults, (f)=>{
+                    this.editingRow[f.type === 'relation' ? _.snakeCase(f.name) : f.name] = f.by_default;
+                });
+
                 this.prepareEditPanel(States.ADD);
             },
             onTreeChange(items){
@@ -164,8 +172,6 @@
                     });
             },
             spreadJsonFields(item){
-
-                console.log('spreadJsonFields', this.crud);
 
                 let jsonFields = _.filter(this.crud.meta.fields, (f)=>f.json);
 
@@ -190,6 +196,7 @@
                     .then((response)=>{
                         this.spreadJsonFields(response.data);
                         this.editingRow = response.data;
+                        console.log('this.editingRow', this.editingRow);
                         this.prepareEditPanel(States.EDIT);
                     })
                     .catch((error)=>{

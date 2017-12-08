@@ -17,13 +17,12 @@ class Crud {
 
 	function __construct() {
 		$this->config = config('cruds');
-		$cruds = $this->config['list'];
 
-		foreach($cruds as $crud){
+		foreach($this->config['list'] as &$crud){
 			$this->cruds[$crud['code']] = $crud;
 		}
 
-		$this->menu = $this->config['list'];
+		$this->menu = $this->config['menu'];
 	}
 
 	public function routes()
@@ -41,11 +40,23 @@ class Crud {
 		$this->menuItems = MenuItem::with( 'children' )->get();
 	}
 
+	function setDefaultValues(){
+		foreach ($this->config['list'] as &$crud){
+			foreach($crud['meta']['fields'] as &$field){
+				if (isset($field['by_default']) && is_callable($field['by_default'])){
+					$field['by_default'] = $field['by_default']();
+					debug($field['by_default']);
+				}
+			}
+		}
+	}
+
 	function getCrudList(){
 		return $this->cruds;
 	}
 
 	function getCrudConfig(){
+		$this->setDefaultValues();
 		return $this->config;
 	}
 
@@ -296,7 +307,15 @@ class Crud {
 			}
 
 			// if not marked as edit field, then go over
-			if (!in_array('edit', $field['visibility']) && !in_array('add', $field['visibility'])) {
+			if (
+				!(in_array('edit', $field['visibility'])
+				    || in_array('add', $field['visibility'])
+					|| (
+						!in_array('add', $field['visibility'])
+						&& isset($field['by_default'])
+					   )
+				)
+			) {
 				continue;
 			}
 

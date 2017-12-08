@@ -15,7 +15,6 @@ export default class Utils {
         let item = {};
 
         for(let field in meta.fields){
-
             if (!meta.fields.hasOwnProperty(field)) continue;
 
             if (meta.fields[field].type === FieldTypes.TEXTBOX ||
@@ -33,11 +32,11 @@ export default class Utils {
             if (meta.fields[field].type === FieldTypes.RELATION){
                 if (meta.fields[field].relation.type === RelationTypes.BELONGS_TO
                     || meta.fields[field].relation.type === RelationTypes.HAS_ONE){
-                    item[field] = {};
+                    item[_.snakeCase(field)] = {};
                 }
                 if (meta.fields[field].relation.type === RelationTypes.HAS_MANY
                     || meta.fields[field].relation.type === RelationTypes.BELONGS_TO_MANY){
-                    item[field] = [];
+                    item[_.snakeCase(field)] = [];
                 }
             }
         }
