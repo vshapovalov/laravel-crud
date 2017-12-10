@@ -3,13 +3,15 @@
         <div>
             <a class="button is-primary" @click.stop.prevent="showLibrary">Выбрать</a>
         </div>
-        <div v-for="(image, index) in images" class="box is-inline-block">
-            <div  class="image is-64x64" @click.stop.prevent="showModal(image)">
-                <img :src="fullPath(image)" alt="">
+        <div v-for="(image, index) in images" :class="{'box': field.additional && field.additional.type === 'image', 'is-inline-block': field.additional && field.additional.type === 'image'}">
+
+            <div v-if="field.additional && field.additional.type === 'image'" class="image is-64x64" @click.stop.prevent="showModal(image)">
+                <img :src="fullPath(image)" :alt="image">
             </div>
-            <a class="button is-danger" @click.stop.prevent="deleteImage(index)">удалить</a>
+            <a v-else :href="fullPath(image)">{{ image }}</a>
+            <a class="button is-danger is-small" @click.stop.prevent="deleteImage(index)">удалить</a>
         </div>
-        <div v-show="images.length === 0"><span>Нет изображений</span></div>
+        <div v-show="images.length === 0"><span>Нет {{ field.additional && field.additional.type === 'image' ? 'изображений' : 'файлов' }}</span></div>
         <div class="modal" :class="{'is-active': modalForm.showing }">
             <div class="modal-background" @click.stop.prevent="cancelModal"></div>
             <div class="modal-content">
@@ -19,17 +21,10 @@
             </div>
             <button class="modal-close is-large" aria-label="close" @click.stop.prevent="cancelModal"></button>
         </div>
-
     </div>
-
-
-
-
 </template>
 
 <script>
-
-    // TODO: thumb params to additional field options or in media library
 
     import LibraryBuilder from './../../media/builder';
     import FormBehaviorTypes from './../../utils/types';

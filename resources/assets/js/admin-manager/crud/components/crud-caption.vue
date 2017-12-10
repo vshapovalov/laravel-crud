@@ -93,16 +93,18 @@
                 if (this.field.json) {
 
                     let jPath = this.field.name.split('->');
-                    console.log('jPath', jPath);
 
                     let tmpValue = this.item[jPath[0]];
 
                     jPath.splice(0,1);
 
-                    _.each(jPath,(p)=>{
-                        tmpValue = tmpValue[p];
-                        console.log('jpathvalue', tmpValue);
-                    });
+                    try{
+                        _.each(jPath,(p)=>{
+                            tmpValue = tmpValue[p];
+                        });
+                    } catch(e){
+                        console.log(e);
+                    }
 
                     value = tmpValue;
                 }

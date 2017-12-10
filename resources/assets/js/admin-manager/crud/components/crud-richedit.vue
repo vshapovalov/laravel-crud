@@ -44,6 +44,7 @@
                 plugins: 'link, lists, image, code, youtube, giphy, table, textcolor, fullscreen, advlist, colorpicker, contextmenu',
                 extended_valid_elements : 'input[id|name|value|type|class|style|required|placeholder|autocomplete|onclick]',
                 file_browser_callback: function(field_name, url, type, win) {
+
                     if(type =='image'){
                         $('#upload_file').trigger('click');
                     }
@@ -53,13 +54,7 @@
                 image_caption: true,
                 image_title: true,
                 file_picker_callback: function(callback, value, meta) {
-                    // Provide file and text for the link dialog
-//                    if (meta.filetype == 'file') {
-//                        callback('mypage.html', {text: 'My text'});
-//                    }
-
-                    // Provide image and alt text for the image dialog
-                    if (meta.filetype == 'image') {
+                    if (meta.filetype == 'image' || meta.filetype == 'file') {
                         new LibraryBuilder(FormBehaviorTypes.PICK).onPick((items)=>{
                             callback(_.first(items), {});
                         }).build().show();
