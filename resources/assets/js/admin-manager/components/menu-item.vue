@@ -1,5 +1,5 @@
 <template>
-    <div class="menu-item" :class="{opened: opened, 'has-items': item.items && item.items.length > 0}">
+    <div class="menu-item" :class="{opened: opened, 'has-items': item.items && item.items.length > 0, 'is-active': item.active}">
         <a @click.stop.prevent="onClick">{{ item.caption }}</a>
         <transition name="slide">
             <div v-show="opened" class="nested-items">

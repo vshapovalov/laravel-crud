@@ -474,19 +474,41 @@ class Crud {
 					}
 
 					$relationIds = [];
-					$pivotFields = [];
-
-					if (isset($field['relation']['pivot'])){
-						$pivotFields = $field['relation']['pivot']['fields'];
-					}
 
 					if (isset($crudField) && !empty($crudField)) {
 
+
+						$jsonPivotRootFields = [];
+
+						if (isset($field['relation']['pivot'])){
+
+							array_walk($field['relation']['pivot']['fields'], function($val, $key)use(&$jsonPivotRootFields){
+								if (isset($val['json']) && $val['json']) {
+
+									$jsonPivotRootFields[ explode('->', $val['name'])[0] ] = '{}';
+								}
+							});
+
+
+						}
+
 						forEach ( $crudField as $crudRelatedItem ) {
+
+							debug($crudRelatedItem);
 
 							if ( isset( $field['relation']['pivot'] ) ) {
 
 								$pivotValues = [];
+
+								$relatedItemExists = $item->{$field['relation']['name']}->contains(function($val, $key) use ($relationCrud, $crudRelatedItem){
+									return $val->{$relationCrud['id']} == $crudRelatedItem[ $relationCrud['id'] ];
+								});
+
+								if (!$relatedItemExists) {
+
+
+									$item->{$field['relation']['name']}()->attach($crudRelatedItem[ $relationCrud['id'] ], $jsonPivotRootFields);
+								}
 
 								forEach ( $field['relation']['pivot']['fields'] as $pivotField ) {
 									if (isset($crudRelatedItem['pivot'][ $pivotField['name'] ])) {

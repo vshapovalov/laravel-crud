@@ -76,7 +76,7 @@ $headerHeight: 60px;
       position: relative;
 
       &.has-items:after{
-        content: '>';
+        content: '+';
         display: block;
         position: absolute;
         right: 10px;
@@ -90,9 +90,9 @@ $headerHeight: 60px;
         display: none;
       }
 
-      padding-top: 5px;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #8c8c8c;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      //border-bottom: 1px solid #8c8c8c;
 
       & > a {
         color: white;

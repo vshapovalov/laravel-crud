@@ -118,7 +118,7 @@
                 return CrudTypes;
             },
             pivotFields(){
-                return this.field.relation.pivot.fields;
+                return _.filter(this.field.relation.pivot.fields, (f)=> f.visibility && _.some(f.visibility,(v)=>v==='edit'));
             },
             tableActions(){
 
@@ -238,10 +238,12 @@
 
                 if(pickedItems && pickedItems.length > 0){
 
-                    _.map(pickedItems, (i)=>{
+                    _.each(pickedItems, (i)=>{
                         if (i.isSelected){
                             i.isSelected = false;
                         }
+
+                        console.log('this.field', this.field);
 
                         if (this.field.relation.pivot){
 
@@ -250,7 +252,6 @@
 
                         }
 
-                        return i;
                     });
 
                     let items = this.items;

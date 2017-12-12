@@ -35,11 +35,7 @@ export default class Utils {
                     && f.relation.pivot && _.some(f.relation.pivot.fields, (f)=>f.json);
             });
 
-            console.log('jsonPivotFields', jsonPivotFields);
-
             _.each(jsonPivotFields, (f)=>{
-
-                console.log('field', f);
 
                 let jsonFields = _.map(_.filter(f.relation.pivot.fields, (f)=> f.json), (mf)=>{
                     let jPath = mf.name.split('->');
@@ -59,13 +55,8 @@ export default class Utils {
                 _.each(item[_.snakeCase(f.name)], (pivotItem)=>{
 
                     _.each(jsonFields, (jf)=>{
-                        console.log('jf', jf);
-
                         let tmpValue = pivotItem.pivot[jf.rootFieldName] ? JSON.parse(pivotItem.pivot[jf.rootFieldName]) : null;
-                        console.log('tmpValue', tmpValue);
-
                         pivotItem.pivot[jf.name] = _.get(tmpValue, jf.jPath, this.defaultFieldValue(jf));
-                        console.log('pivotItem[f.name]', pivotItem.pivot[jf.name]);
                     });
 
                 });
@@ -77,6 +68,11 @@ export default class Utils {
     }
 
     static defaultFieldValue(field){
+
+        if (field.hasOwnProperty('by_default')){
+            return field.by_default;
+        }
+
         if (field.type === FieldTypes.TEXTBOX ||
             field.type === FieldTypes.CHECKBOX ||
             field.type === FieldTypes.COLORBOX ||
@@ -105,7 +101,7 @@ export default class Utils {
         let item = {};
 
         _.each(meta.fields, (f)=>{
-            item[_.snakeCase(f.name)] = this.defaultFieldValue();
+            item[ f.json ? f.name : _.snakeCase(f.name)] = this.defaultFieldValue(f);
         });
 
         return item;

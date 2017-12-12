@@ -60,9 +60,7 @@
                 );
 
                 if (this.withPivot) {
-                    fields.splice(fields.length, 0, ..._.map(this.pivotFields,(f)=>{
-//                        f.originalName = f.name;
-//                        f.name = "pivot|" + f.name;
+                    fields.splice(fields.length, 0, ..._.map(_.filter(this.pivotFields, (pv)=>_.some(pv.visibility,(v)=>v===VisibilityTypes.BROWSE)),(f)=>{
                         f.isPivot = true;
                         return f;
                     }));

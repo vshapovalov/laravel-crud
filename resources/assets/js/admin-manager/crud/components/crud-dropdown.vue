@@ -10,7 +10,7 @@
         </div>
         <div class="dropdown-menu" role="menu">
             <div class="dropdown-content">
-                <table class="table">
+                <table class="table" style="margin-bottom: 0;">
                     <thead>
                         <tr>
                             <th>Значение</th>
@@ -99,6 +99,8 @@
         },
         mounted() {
 
+            console.log('this.value',this.value);
+
             if (this.field.additional && this.field.additional.values){
 
                 this.rows = this.field.additional.values;
@@ -107,7 +109,7 @@
 
                     if (this.isSingleMode) {
 
-                        this.selectedRow = _.find(this.rows,(r)=> r.key === this.value );
+                        this.selectedRow = _.find(this.rows,(r)=> r.key == this.value );
                     } else {
 
                         let valArr;

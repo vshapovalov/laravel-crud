@@ -33,7 +33,8 @@
                 cruds: {},
                 menu: [],
                 additionalComponents: [],
-                additionalComponentsLoaded: 0
+                additionalComponentsLoaded: 0,
+                selectedMenuItem: null
             }
         },
         components:{
@@ -62,6 +63,13 @@
             },
 
             emitMenuAction(menuItem){
+                if (this.selectedMenuItem) {
+                    this.$set(this.selectedMenuItem, 'active', false);
+                }
+
+                this.selectedMenuItem = menuItem;
+                this.$set(menuItem, 'active', true);
+
                 Bus.$emit(menuItem.action, menuItem.action, menuItem.caption);
 
             },
