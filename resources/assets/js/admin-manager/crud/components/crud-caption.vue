@@ -7,7 +7,9 @@
         <span v-else-if="fieldType === fieldTypes.COLORBOX" :style="{'background-color': fieldValue}" class="tag">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.CHECKBOX ">{{ (fieldValue && (fieldValue !==0) && (fieldValue !== "0")) ? "Да" : "Нет" }}</span>
         <span v-else-if="fieldType === fieldTypes.DROPDOWN">{{ fieldValue }}</span>
-        <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.BELONGS_TO">{{ item[toSnakeCase(field.relation.name)] ? item[toSnakeCase(field.relation.name)][getCrud(field.relation.crud)['display']] : '' }}</span>
+        <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.BELONGS_TO">
+            {{ item[!field.json ? toSnakeCase(field.relation.name) : field.relation.name] ? item[!field.json ? toSnakeCase(field.relation.name) : field.relation.name][getCrud(field.relation.crud)['display']] : '' }}
+        </span>
         <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.HAS_MANY">
             <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.relation.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud)['display']] }}</span>
         </span>
@@ -90,24 +92,24 @@
                     value = this.item.pivot[this.field.name];
                 }
 
-                if (this.field.json) {
-
-                    let jPath = this.field.name.split('->');
-
-                    let tmpValue = this.item[jPath[0]];
-
-                    jPath.splice(0,1);
-
-                    try{
-                        _.each(jPath,(p)=>{
-                            tmpValue = tmpValue[p];
-                        });
-                    } catch(e){
-                        console.log(e);
-                    }
-
-                    value = tmpValue;
-                }
+//                if (this.field.json) {
+//
+//                    let jPath = this.field.name.split('->');
+//
+//                    let tmpValue = this.field.isPivot ? this.item.pivot[jPath[0]] : this.item[jPath[0]];
+//
+//                    jPath.splice(0,1);
+//
+//                    try{
+//                        _.each(jPath,(p)=>{
+//                            tmpValue = tmpValue[p];
+//                        });
+//                    } catch(e){
+//                        console.log(e);
+//                    }
+//
+//                    value = tmpValue;
+//                }
 
                 if (this.field.type === FieldTypes.DROPDOWN && this.field.additional) {
 

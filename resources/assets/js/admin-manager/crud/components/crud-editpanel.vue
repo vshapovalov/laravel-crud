@@ -31,7 +31,7 @@
                                         :field="field"></crud-dropdown>
                                 <crud-relation-one
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO || field.relation.type === relationTypes.HAS_ONE))"
-                                        v-model="item[toSnake(field.relation.name)]" :crud-code="field.relation.crud" :field="field" :item="item"></crud-relation-one>
+                                        v-model="item[field.json ? field.relation.name : toSnake(field.relation.name)]" :crud-code="field.relation.crud" :field="field" :item="item"></crud-relation-one>
                                 <crud-relation-many
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && field.relation.type == relationTypes.HAS_MANY)"
                                         v-model="item[toSnake(field.relation.name)]" :crud-code="field.relation.crud" :field="field" :item="item"></crud-relation-many>

@@ -38,6 +38,10 @@
                                 <crud-datepicker v-if="field.type === fieldTypes.DATEPICKER" v-model="pivotRow[field.name]" :field="field"></crud-datepicker>
                                 <crud-colorbox v-if="field.type === fieldTypes.COLORBOX" v-model="pivotRow[field.name]" :field="field"></crud-colorbox>
                                 <crud-image v-if="field.type === fieldTypes.IMAGE" v-model="pivotRow[field.name]" :field="field"></crud-image>
+                                <crud-dropdown v-if="field.type === fieldTypes.DROPDOWN" v-model="pivotRow[field.name]" :field="field"></crud-dropdown>
+                                <!--<crud-relation-one-->
+                                    <!--v-else-if="(field.type === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO ))"-->
+                                    <!--v-model="pivotRow[field.name]" :crud-code="field.relation.crud" :field="field" :item="pivotRow"></crud-relation-one>-->
                             </div>
                         </div>
                     </div>
@@ -57,6 +61,7 @@
     import CrudBuilder from './../builder';
     import CrudTypes from './../../utils/types';
     import FieldTypes from './../utils/field-types';
+    import RelationTypes from './../utils/relation-types';
 
     /*** components ***/
     import VueCrudTextbox from './crud-textbox.vue';
@@ -105,6 +110,10 @@
             }
         },
         computed: {
+            relationTypes(){
+                return RelationTypes;
+            },
+
             crudTypes(){
                 return CrudTypes;
             },

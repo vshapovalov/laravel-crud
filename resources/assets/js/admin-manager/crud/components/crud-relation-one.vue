@@ -80,9 +80,6 @@
                 if (this.crud)
                 {
 
-                    console.log('builder');
-                    console.log(this.item);
-
                     let crudEditor = new CrudBuilder(this.crud, CrudTypes.PICK)
                         .onPick((values)=> {
                             this.changeItem(_.first(values));

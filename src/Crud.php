@@ -175,11 +175,17 @@ class Crud {
 //
 //		$qb->select($fields);
 
-		if (count($relationships)){
-			$qb = $qb->with($relationships);
-		}
+		$relationFields = array_map(function($f){
+			return $f['relation']['name'];
+		}, array_filter($crud['meta']['fields'], function($f){
+			return $f['type'] == 'relation' && (!isset($f['json']) || (isset($f['json']) && !$f['json']));
+		}));
 
-//		$qb->select($fields);
+		$relationFields = array_values($relationFields);
+
+		if (count($relationFields)){
+			$qb = $qb->with($relationFields);
+		}
 
 		if (isset($crud['scopes']) && count($crud['scopes'])){
 
@@ -385,7 +391,16 @@ class Crud {
 				continue;
 			}
 
-			if ($field['type'] == 'relation'){
+			if ( $field['type'] == 'relation' && isset($field['json']) && $field['json'] ) {
+
+				$item[$field['name']] = $inputValues[$field['name']];
+
+			}
+
+			if (
+				$field['type'] == 'relation' &&
+				( !isset($field['json'] ) || ( isset($field['json']) && !$field['json'] ) )
+			){
 
 				$crudField = null;
 
@@ -402,7 +417,7 @@ class Crud {
 
 				/************************************ belongsTo ************************************/
 
-				if ($field['relation']['type'] == 'belongsTo'){
+				if ( $field['relation']['type'] == 'belongsTo' ){
 
 					if (!isset($crudField) || empty($crudField)){
 						$item->{$field['relation']['name']}()->dissociate();
@@ -465,8 +480,6 @@ class Crud {
 						$pivotFields = $field['relation']['pivot']['fields'];
 					}
 
-
-
 					if (isset($crudField) && !empty($crudField)) {
 
 						forEach ( $crudField as $crudRelatedItem ) {
@@ -476,7 +489,9 @@ class Crud {
 								$pivotValues = [];
 
 								forEach ( $field['relation']['pivot']['fields'] as $pivotField ) {
-									$pivotValues[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
+									if (isset($crudRelatedItem['pivot'][ $pivotField['name'] ])) {
+										$pivotValues[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
+									}
 								}
 
 								$relationIds[ $crudRelatedItem[ $relationCrud['id'] ] ] = $pivotValues;

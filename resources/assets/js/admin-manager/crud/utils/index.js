@@ -11,35 +11,102 @@ export default class Utils {
         return rand;
     }
 
+    static spreadJsonFields(item, fields, spreadPivot = false){
+
+        let jsonFields = _.filter(fields, (f)=>f.json);
+
+        _.each(jsonFields, (f)=>{
+
+            let jPath = f.name.split('->');
+
+            let tmpValue = item[jPath[0]] ? JSON.parse(item[jPath[0]]) : null;
+
+            jPath.splice(0,1);
+
+            jPath = jPath.join('.');
+
+            item[f.name] = _.get(tmpValue, jPath, this.defaultFieldValue(f));
+
+        });
+
+        if (spreadPivot) {
+            let jsonPivotFields = _.filter(fields, (f)=>{
+                return f.type === 'relation' && f.relation.type === 'belongsToMany'
+                    && f.relation.pivot && _.some(f.relation.pivot.fields, (f)=>f.json);
+            });
+
+            console.log('jsonPivotFields', jsonPivotFields);
+
+            _.each(jsonPivotFields, (f)=>{
+
+                console.log('field', f);
+
+                let jsonFields = _.map(_.filter(f.relation.pivot.fields, (f)=> f.json), (mf)=>{
+                    let jPath = mf.name.split('->');
+                    let rootFieldName = jPath[0];
+
+                    jPath.splice(0,1);
+
+                    jPath = jPath.join('.');
+
+                    return {
+                      rootFieldName,
+                      name: mf.name,
+                      jPath
+                    };
+                });
+
+                _.each(item[_.snakeCase(f.name)], (pivotItem)=>{
+
+                    _.each(jsonFields, (jf)=>{
+                        console.log('jf', jf);
+
+                        let tmpValue = pivotItem.pivot[jf.rootFieldName] ? JSON.parse(pivotItem.pivot[jf.rootFieldName]) : null;
+                        console.log('tmpValue', tmpValue);
+
+                        pivotItem.pivot[jf.name] = _.get(tmpValue, jf.jPath, this.defaultFieldValue(jf));
+                        console.log('pivotItem[f.name]', pivotItem.pivot[jf.name]);
+                    });
+
+                });
+
+            });
+        }
+
+        return item;
+    }
+
+    static defaultFieldValue(field){
+        if (field.type === FieldTypes.TEXTBOX ||
+            field.type === FieldTypes.CHECKBOX ||
+            field.type === FieldTypes.COLORBOX ||
+            field.type === FieldTypes.TEXTAREA ||
+            field.type === FieldTypes.DROPDOWN ||
+            field.type === FieldTypes.DATEPICKER ||
+            field.type === FieldTypes.RICHEDIT ||
+            field.type === FieldTypes.TEXTBOX ||
+            field.type === FieldTypes.IMAGE ){
+            return "";
+        }
+
+        if (field.type === FieldTypes.RELATION){
+            if (field.relation.type === RelationTypes.BELONGS_TO
+                || field.relation.type === RelationTypes.HAS_ONE){
+                return {};
+            }
+            if (field.relation.type === RelationTypes.HAS_MANY
+                || field.relation.type === RelationTypes.BELONGS_TO_MANY){
+                return [];
+            }
+        }
+    }
+
     static createMetaObject(meta){
         let item = {};
 
-        for(let field in meta.fields){
-            if (!meta.fields.hasOwnProperty(field)) continue;
-
-            if (meta.fields[field].type === FieldTypes.TEXTBOX ||
-                meta.fields[field].type === FieldTypes.CHECKBOX ||
-                meta.fields[field].type === FieldTypes.COLORBOX ||
-                meta.fields[field].type === FieldTypes.TEXTAREA ||
-                meta.fields[field].type === FieldTypes.DROPDOWN ||
-                meta.fields[field].type === FieldTypes.DATEPICKER ||
-                meta.fields[field].type === FieldTypes.RICHEDIT ||
-                meta.fields[field].type === FieldTypes.TEXTBOX ||
-                meta.fields[field].type === FieldTypes.IMAGE ){
-                item[field] = "";
-            }
-
-            if (meta.fields[field].type === FieldTypes.RELATION){
-                if (meta.fields[field].relation.type === RelationTypes.BELONGS_TO
-                    || meta.fields[field].relation.type === RelationTypes.HAS_ONE){
-                    item[_.snakeCase(field)] = {};
-                }
-                if (meta.fields[field].relation.type === RelationTypes.HAS_MANY
-                    || meta.fields[field].relation.type === RelationTypes.BELONGS_TO_MANY){
-                    item[_.snakeCase(field)] = [];
-                }
-            }
-        }
+        _.each(meta.fields, (f)=>{
+            item[_.snakeCase(f.name)] = this.defaultFieldValue();
+        });
 
         return item;
     }

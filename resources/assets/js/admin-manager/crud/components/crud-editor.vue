@@ -171,30 +171,12 @@
                         toastr.error(error, 'Не удалось обновить положение');
                     });
             },
-            spreadJsonFields(item){
 
-                let jsonFields = _.filter(this.crud.meta.fields, (f)=>f.json);
-
-                _.each(jsonFields, (f)=>{
-
-                    let jPath = f.name.split('->');
-
-                    let tmpValue = item[jPath[0]];
-
-                    jPath.splice(0,1);
-
-                    _.each(jPath, (p)=>{
-                        tmpValue = tmpValue[p];
-                    });
-
-                    item[f.name] = tmpValue;
-                });
-            },
             editItem(item){
 
                 CrudApi.crudGetItem(this.crud.code, item[this.crud.id])
                     .then((response)=>{
-                        this.spreadJsonFields(response.data);
+                        CrudUtils.spreadJsonFields(response.data, this.crud.meta.fields, true);
                         this.editingRow = response.data;
                         console.log('this.editingRow', this.editingRow);
                         this.prepareEditPanel(States.EDIT);
@@ -208,6 +190,8 @@
                 this.state = States.BROWSE;
             },
             saveRow(){
+                console.log('this.editingRow', this.editingRow);
+
                 CrudApi.crudSaveItem(this.crud.code, { item: this.editingRow})
                     .then((response)=>{
 
@@ -288,7 +272,9 @@
                 CrudApi.crudGetItems(this.crud.code, { item: this.item, sort: { field: this.sortField, type: this.sortType }})
                     .then((response)=>{
 
-                        this.items = response.data.items;
+                        this.items = response.data.items.map((i)=>{
+                            return CrudUtils.spreadJsonFields(i, this.crud.meta.fields, false);
+                        });
 
                     })
                     .catch((error)=>{
