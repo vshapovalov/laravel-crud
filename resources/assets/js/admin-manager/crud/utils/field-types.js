@@ -9,5 +9,5 @@ export default {
     RELATION: 'relation',
     IMAGE: 'image',
     DYNAMIC: 'dynamic',
-
+    VALUESTABLE: 'valuestable',
 }

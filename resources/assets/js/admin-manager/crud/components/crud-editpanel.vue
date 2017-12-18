@@ -125,7 +125,6 @@
 
                     _.each(jPath,(p)=>{
                         tmpValue = tmpValue[p];
-                        console.log('jpathvalue', tmpValue);
                     });
 
                     value = tmpValue;

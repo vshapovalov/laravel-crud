@@ -2,17 +2,17 @@
     <div class="">
         <div class="">
             <div class="control">
-                <a class="button is-info" @click.prevent.stop="addItems">
-                    Добавить
-                </a>
-                <a class="button is-danger" @click.prevent.stop="delAllItems">
-                    Удалить все
-                </a>
+                <a class="button is-success" @click.prevent.stop="addItems">Выбрать</a>
+                <a class="button is-primary" @click.prevent.stop="addRow">Добавить</a>
+                <a class="button is-danger" @click.prevent.stop="delAllItems">Удалить все</a>
             </div>
         </div>
         <crud-table :items="items" :type="crudTypes.PICK_MANY" :crud="crud" @delete="deleteItem" @edit="editItem"
                     :row-actions="tableActions" :with-pivot="field.relation.pivot"
                     :pivot-fields="field.relation.pivot ? field.relation.pivot.fields : []"></crud-table>
+
+        <crud-editpanel v-if="showEditPanel" v-model="editingRow" :fields="crud.meta.fields" :crud="crud"
+                        @approve="saveRow" @cancel="cancelEditing"></crud-editpanel>
 
         <div v-if="modalForm.active" class="modal is-active">
             <div class="modal-background"></div>
@@ -72,6 +72,7 @@
     import VueCrudRichedit from './crud-richedit.vue';
     import VueCrudTable from './crud-table.vue';
     import VueCrudDropdown from './crud-dropdown.vue';
+    import VueCrudEditPanel from './crud-editpanel.vue';
     import VueCrudImage from './crud-image.vue';
 
     export default {
@@ -83,7 +84,8 @@
             'crud-colorbox': VueCrudColorbox,
             'crud-datepicker': VueCrudDatepicker,
             'crud-dropdown': VueCrudDropdown,
-            'crud-image': VueCrudImage
+            'crud-image': VueCrudImage,
+            'crud-editpanel': VueCrudEditPanel
         },
         name: 'crud-relation-many',
         model: {
@@ -107,6 +109,9 @@
                     active : false,
                     onSuccess: null
                 },
+                /*****  edit panel stuff *****/
+                state: States.BROWSE,
+                editingRow: {},
             }
         },
         computed: {
@@ -138,6 +143,74 @@
             }
         },
         methods: {
+            /*************** edit panel stuff *******************/
+
+            prepareEditPanel(state){
+                this.state = state;
+            },
+            addRow(){
+                this.editingRow = CrudUtils.createMetaObject(this.crud.meta);
+
+                // set default values
+                let fieldsWithDefaults = _.filter(this.crud.meta.fields, (f)=>f.hasOwnProperty('by_default'));
+
+                _.each(fieldsWithDefaults, (f)=>{
+                    this.editingRow[f.type === 'relation' ? _.snakeCase(f.name) : f.name] = f.by_default;
+                });
+
+                this.prepareEditPanel(States.ADD);
+            },
+            editItem(item){
+
+                CrudApi.crudGetItem(this.crud.code, item[this.crud.id])
+                    .then((response)=>{
+                        CrudUtils.spreadJsonFields(response.data, this.crud.meta.fields, true);
+                        this.editingRow = response.data;
+                        console.log('this.editingRow', this.editingRow);
+                        this.prepareEditPanel(States.EDIT);
+                    })
+                    .catch((error)=>{
+                        toastr.error(error, 'Не удалось получить запись');
+                        console.log(error);
+                    });
+            },
+            cancelEditing(){
+                this.state = States.BROWSE;
+            },
+            saveRow(){
+                console.log('this.editingRow', this.editingRow);
+
+                CrudApi.crudSaveItem(this.crud.code, { item: this.editingRow})
+                    .then((response)=>{
+
+                        if (response.data.status === 'success'){
+                            this.editingRow = {};
+                            this.state = States.BROWSE;
+                        } else {
+                            if (response.data.status === 'error'){
+
+                                if (response.data.errors) {
+                                    _.forEach(response.data.errors, (f)=>{
+                                        _.forEach(f, (m)=>{
+                                            toastr.error(m);
+                                        });
+                                    });
+
+                                } else {
+                                    toastr.error('Проверьте заполненность полей', 'Ошибка сохранения записи');
+                                }
+                            }
+                        }
+
+
+
+                    })
+                    .catch((error)=>{
+                        toastr.error(error, 'Ошибка сохранения записи');
+                        console.log(error);
+                    });
+
+            },
 
             /***************************************** tabs ***************************/
 

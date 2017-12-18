@@ -45,7 +45,17 @@ class Crud {
 			foreach($crud['meta']['fields'] as &$field){
 				if (isset($field['by_default']) && is_callable($field['by_default'])){
 					$field['by_default'] = $field['by_default']();
+					debug($field['name']);
 					debug($field['by_default']);
+				}
+
+				if ( $field['type'] == 'relation' && isset($field['relation']['pivot']) ) {
+
+					foreach($field['relation']['pivot']['fields'] as &$pivotfield){
+						if (isset($pivotfield['by_default']) && is_callable($pivotfield['by_default'])){
+							$pivotfield['by_default'] = $pivotfield['by_default']();
+						}
+					}
 				}
 			}
 		}
@@ -165,7 +175,7 @@ class Crud {
 
 		$qb = call_user_func($crud['model']."::query");
 
-		$relationships = array_keys($item->relationships());
+//		$relationships = array_keys($item->relationships());
 
 //		$fields = array_map(function($f){
 //			return $f['name'];
@@ -182,6 +192,8 @@ class Crud {
 		}));
 
 		$relationFields = array_values($relationFields);
+
+		debug($relationFields);
 
 		if (count($relationFields)){
 			$qb = $qb->with($relationFields);
@@ -248,11 +260,9 @@ class Crud {
 		});
 
 		$validationRules = array_combine(
-				array_map( function ($val) {return snake_case($val); }, array_keys($validatingFields)),
-				array_map( function ($val) {return $val['validation']; }, $validatingFields)
-			);
-
-//		debug($validationRules);
+			array_map( function ($val) {return snake_case($val); }, array_pluck($validatingFields, 'name')),
+			array_map( function ($val) {return $val['validation']; }, $validatingFields)
+		);
 
 		if (count($validationRules)) {
 
@@ -314,13 +324,13 @@ class Crud {
 
 			// if not marked as edit field, then go over
 			if (
-				!(in_array('edit', $field['visibility'])
-				    || in_array('add', $field['visibility'])
-					|| (
-						!in_array('add', $field['visibility'])
-						&& isset($field['by_default'])
-					   )
-				)
+			!(in_array('edit', $field['visibility'])
+			  || in_array('add', $field['visibility'])
+			  || (
+				  !in_array('add', $field['visibility'])
+				  && isset($field['by_default'])
+			  )
+			)
 			) {
 				continue;
 			}
@@ -412,9 +422,6 @@ class Crud {
 
 				$relationCrud = $this->getCrudByCode($field['relation']['crud']);
 
-//				debug($field['name']);
-//				debug($field['relation']['type']);
-
 				/************************************ belongsTo ************************************/
 
 				if ( $field['relation']['type'] == 'belongsTo' ){
@@ -478,8 +485,8 @@ class Crud {
 					if (isset($crudField) && !empty($crudField)) {
 
 
+						// extract json root fields names
 						$jsonPivotRootFields = [];
-
 						if (isset($field['relation']['pivot'])){
 
 							array_walk($field['relation']['pivot']['fields'], function($val, $key)use(&$jsonPivotRootFields){
@@ -488,31 +495,37 @@ class Crud {
 									$jsonPivotRootFields[ explode('->', $val['name'])[0] ] = '{}';
 								}
 							});
-
-
 						}
 
-						forEach ( $crudField as $crudRelatedItem ) {
+						debug($jsonPivotRootFields);
 
-							debug($crudRelatedItem);
+						forEach ( $crudField as $crudRelatedItem ) {
 
 							if ( isset( $field['relation']['pivot'] ) ) {
 
 								$pivotValues = [];
-
-								$relatedItemExists = $item->{$field['relation']['name']}->contains(function($val, $key) use ($relationCrud, $crudRelatedItem){
-									return $val->{$relationCrud['id']} == $crudRelatedItem[ $relationCrud['id'] ];
-								});
-
-								if (!$relatedItemExists) {
-
-
-									$item->{$field['relation']['name']}()->attach($crudRelatedItem[ $relationCrud['id'] ], $jsonPivotRootFields);
-								}
+								$jsonPivotNonJsonFields = [];
 
 								forEach ( $field['relation']['pivot']['fields'] as $pivotField ) {
 									if (isset($crudRelatedItem['pivot'][ $pivotField['name'] ])) {
 										$pivotValues[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
+
+										if (count($jsonPivotRootFields) && (!isset($pivotField['json']) || (isset($pivotField['json']) && !$pivotField['json']) )){
+											$jsonPivotNonJsonFields[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
+										}
+									}
+								}
+
+								debug($jsonPivotNonJsonFields);
+
+								if (count($jsonPivotRootFields)) {
+									$relatedItemExists = $item->{$field['relation']['name']}->contains(function($val, $key) use ($relationCrud, $crudRelatedItem){
+										return $val->{$relationCrud['id']} == $crudRelatedItem[ $relationCrud['id'] ];
+									});
+
+									if (!$relatedItemExists) {
+
+										$item->{$field['relation']['name']}()->attach($crudRelatedItem[ $relationCrud['id'] ], array_merge($jsonPivotNonJsonFields, $jsonPivotRootFields));
 									}
 								}
 

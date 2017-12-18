@@ -71,6 +71,8 @@ class MediaController extends BaseController
 
 				    $quality = null;
 
+
+
 			    	if (isset($this->settings['resize'])){
 
 			    		$image->resize(
@@ -117,6 +119,18 @@ class MediaController extends BaseController
 								    $thumb['crop']['width'],
 								    $thumb['crop']['height']
 							    );
+						    }
+
+						    if (isset($thumb['fit'])){
+
+//						    	position
+//							    top-left, top, top-right, left, center (default), right, bottom-left,
+//								bottom, bottom-right
+
+							    $image->fit($thumb['fit']['width'], $thumb['fit']['height'], function ($constraint) {
+								    $constraint->upsize();
+							    }, isset($thumb['fit']['position'])? $thumb['fit']['position'] : 'center');
+
 						    }
 
 						    $image->save(

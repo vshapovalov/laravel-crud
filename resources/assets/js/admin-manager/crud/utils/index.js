@@ -11,7 +11,7 @@ export default class Utils {
         return rand;
     }
 
-    static spreadJsonFields(item, fields, spreadPivot = false){
+    static spreadJsonFields(item, fields, spreadRelations = false){
 
         let jsonFields = _.filter(fields, (f)=>f.json);
 
@@ -29,7 +29,21 @@ export default class Utils {
 
         });
 
-        if (spreadPivot) {
+        if (spreadRelations) {
+
+            _.each(fields, (f)=>{
+
+                if ((f.type === FieldTypes.RELATION) &&
+                    (f.relation.type === RelationTypes.HAS_MANY || f.relation.type === RelationTypes.BELONGS_TO_MANY ) ){
+
+                    let relationCrud = AdminManager.getCrud(f.relation.crud);
+
+                    _.each(item[ _.snakeCase(f.name) ], (relatedItem)=>{
+                        this.spreadJsonFields(relatedItem, relationCrud.meta.fields, false);
+                    });
+                }
+            });
+
             let jsonPivotFields = _.filter(fields, (f)=>{
                 return f.type === 'relation' && f.relation.type === 'belongsToMany'
                     && f.relation.pivot && _.some(f.relation.pivot.fields, (f)=>f.json);
