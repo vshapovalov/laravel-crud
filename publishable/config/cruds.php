@@ -114,6 +114,13 @@
 									'width' => 250,
 									'height' => 250,
 								]
+							],
+							[
+								'name' => 'fitted',
+								'fit' => [ // fit mode
+									'width' => 250,
+									'height' => 250,
+								]
 							]
 						]
 					]
@@ -158,6 +165,9 @@
 								]
 							]
 						]
+					'additional' => [
+								'buttons' => ['add', 'pick', 'delete_all']
+							]
 	 */
 
 return

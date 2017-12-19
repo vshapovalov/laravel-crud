@@ -2,9 +2,9 @@
     <div class="">
         <div class="">
             <div class="control">
-                <a class="button is-success" @click.prevent.stop="pickItems">Выбрать</a>
-                <a class="button is-primary" @click.prevent.stop="addItem">Добавить</a>
-                <a class="button is-danger" @click.prevent.stop="delAllItems">Удалить все</a>
+                <a v-show="isButtonVIsible('pick')" class="button is-success" @click.prevent.stop="pickItems">Выбрать</a>
+                <a v-show="isButtonVIsible('add')" class="button is-primary" @click.prevent.stop="addItem">Добавить</a>
+                <a v-show="isButtonVIsible('delete_all')" class="button is-danger" @click.prevent.stop="delAllItems">Удалить все</a>
             </div>
         </div>
         <crud-table :items="items" :type="crudTypes.PICK_MANY" :crud="crud" @delete="deleteItem" @edit="editItem"
@@ -134,10 +134,16 @@
             },
             fieldTypes(){
                 return FieldTypes;
+            },
+            buttons(){
+                return this.field.additional && this.field.additional.buttons ? this.field.additional.buttons : ['add' ,'pick', 'delete_all']
             }
         },
         methods: {
 
+            isButtonVIsible(btn){
+                return _.find(this.buttons, b=>b===btn );
+            },
 
             /***************************************** tabs ***************************/
 
