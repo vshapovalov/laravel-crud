@@ -193,7 +193,6 @@ class Crud {
 
 		$relationFields = array_values($relationFields);
 
-		debug($relationFields);
 
 		if (count($relationFields)){
 			$qb = $qb->with($relationFields);
@@ -253,7 +252,10 @@ class Crud {
 	 *
 	 *
 	 */
-	function validateValuesByCrud($crud, $inputValues){
+	function validateItem($crud, $inputValues){
+
+		if (is_string($crud))
+			$crud = $this->cruds[$crud];
 
 		$validatingFields = array_filter($crud['meta']['fields'], function($field){
 			return isset($field['validation']);
@@ -284,11 +286,7 @@ class Crud {
 			$crud = $this->cruds[$crud];
 
 
-		if ($errors = $this->validateValuesByCrud($crud, $inputValues)){
 
-			return $errors;
-
-		};
 
 		if (isset($inputValues[$crud['id']])) {
 
@@ -589,7 +587,7 @@ class Crud {
 
 		}
 
-		return false;
+		return $item;
 
 	}
 

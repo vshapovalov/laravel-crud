@@ -7,7 +7,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-show="items.length === 0">
+        <tr v-show="items && items.length === 0">
             <td>Нет записей</td>
         </tr>
         <tr v-for="item in items" @click.prevent="selectItem(item)" :class="{'is-selected': item.isSelected}">

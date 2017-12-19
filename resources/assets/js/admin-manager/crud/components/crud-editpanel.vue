@@ -1,9 +1,9 @@
 <template>
-    <div class="modal is-active">
+    <div v-if="active" class="modal is-active">
         <div class="modal-background"></div>
-        <div class="modal-card" style="height: 100%; width: 100%; margin: 20px;">
+        <div class="modal-card" style="height: 100%; width: 100%; margin: 20px;" :class="{'is-blured': !isReady}">
             <header class="modal-card-head">
-                <p class="modal-card-title">{{ editState === editStates.ADD ? 'Создание' : 'Редактирование' }}</p>
+                <p class="modal-card-title">{{ editState === editStates.ADD ? 'Создание' : 'Редактирование' }} [{{ crud.name }}]</p>
                 <button class="delete" aria-label="close" @click="doCancel"></button>
             </header>
             <section class="modal-card-body">
@@ -15,7 +15,7 @@
                     </div>
 
                     <div v-for="tab in crudTabs" v-show="activeTab == tab">
-                        <div class="field " v-for="field in crudEditableFields" v-if="field.tab == tab || (!field.tab & tab == 'основные параметры')">
+                        <div class="field " v-for="field in crudEditableFields" v-if="field.tab == tab || (!field.tab & tab == 'Основные параметры')">
                             <label class="label">{{ field.caption }}<small v-show="field.description"> ({{field.description }})</small></label>
 
                             <div class="control">
@@ -45,7 +45,7 @@
                 </div>
             </section>
             <footer class="modal-card-foot">
-                <a href="#" class="button is-success" @click.prevent.stop="doApprove">Сохранить</a>
+                <a href="#" class="button is-success" @click.prevent.stop="doSave">Сохранить</a>
                 <a href="#" class="button is-danger is-outlined" @click.prevent.stop="doCancel">Отмена</a>
             </footer>
         </div>
@@ -57,23 +57,22 @@
     import FieldTypes from './../utils/field-types';
     import VisibilityTypes from './../utils/visibility-types';
     import EditStates from './../utils/states';
+    import CrudUtils from './../utils';
+    import CrudApi from './../../api';
 
     export default {
         name: 'crud-editpanel',
-        model: {
-            prop: 'item',
-            event: 'change'
-        },
-        props: ['item', 'fields', 'crud'],
+        props: ['item-id', 'fields', 'crud', 'active'],
         data: function () {
             return {
                 activeTab: '',
-
+                item: {},
+                isReady: false
             }
         },
         computed: {
             editState(){
-                return this.item[this.crud.id] ? EditStates.EDIT : EditStates.ADD;
+                return this.itemId ? EditStates.EDIT : EditStates.ADD;
             },
             editStates(){
                 return EditStates;
@@ -100,7 +99,7 @@
 
             },
             crudTabs(){
-                return _.keys(_.groupBy(this.fields, (f)=> f.tab ? f.tab : "основные параметры"));
+                return _.keys(_.groupBy(this.fields, (f)=> f.tab ? f.tab : "Основные параметры") );
             },
             fieldTypes(){ return FieldTypes; },
             relationTypes(){ return RelationTypes; },
@@ -168,18 +167,73 @@
 
             /****************************** end tabs *************************************/
 
-            doApprove(){
-                this.$emit('change', this.item);
-                this.$emit('approve');
+            doSave(){
+                this.isReady = false;
+
+                CrudApi.crudSaveItem(this.crud.code, { item: this.item})
+                    .then((response)=>{
+
+                        if (response.data.status === 'success'){
+
+                            this.$emit('save', response.data.item);
+                            toastr.success('Запись обновлена');
+                        } else {
+
+                            if (response.data.status === 'error'){
+
+                                if (response.data.errors) {
+                                    _.forEach(response.data.errors, (f)=>{
+                                        _.forEach(f, (m)=>{
+                                            toastr.error(m);
+                                        });
+                                    });
+
+                                } else {
+                                    toastr.error('Проверьте заполненность полей', 'Ошибка сохранения записи');
+                                }
+                            }
+                        }
+                        this.isReady = true;
+                    })
+                    .catch((error)=>{
+                        toastr.error(error, 'Ошибка сохранения записи');
+                        console.log(error);
+                        this.isReady = true;
+                    });
             },
             doCancel(){
                 this.$emit('cancel');
             },
         },
-        mounted() {
+        beforeMount() {
             this.activeTab = this.crudTabs[0];
-
-
+            if (!this.itemId) {
+                this.item = CrudUtils.createMetaObject(this.crud.meta);
+                CrudUtils.spreadJsonFields(this.item, this.crud.meta.fields, true);
+                this.isReady = true;
+            } else {
+                CrudApi.crudGetItem(this.crud.code, this.itemId)
+                    .then((response)=>{
+                        CrudUtils.spreadJsonFields(response.data, this.crud.meta.fields, true);
+                        this.item = response.data;
+                        this.isReady = true;
+                    })
+                    .catch((error)=>{
+                        toastr.error(error, 'Не удалось получить запись');
+                        console.error('edit panel - get item:', error);
+                        this.isReady = true;
+                    });
+            }
         }
     }
 </script>
+
+<style lang="scss">
+    .is-blured{
+        filter: blur(2px);
+    }
+
+    .tabs{
+        margin-top: 0.25em;
+    }
+</style>

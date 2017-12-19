@@ -11,13 +11,13 @@
                     <div class="panel-block">
                         <div>
                             <a href="#" class="button is-primary is-outlined" @click.prevent="getList">Обновить</a>
-                            <a href="#" class="button is-success" @click="addRow">Добавить</a>
+                            <a href="#" class="button is-success" @click="addItem">Добавить</a>
 
                             <a v-if="isPickMode" href="#" class="button is-primary" @click="pickRows">Выбрать</a>
                             <a v-if="isPickMode" href="#" class="button is-danger is-outlined" @click="pickCancel">Отмена</a>
                         </div>
                     </div>
-                    <div class="panel-block">
+                    <div class="panel-block" :class="{'is-blured': !isReady}">
                         <crud-table v-if="crud.type === 'list'" class="is-fullwidth" :items="items"
                                     :crud="crud" :type="editorType" @edit="editItem" @delete="deleteItem"
                                     @select="selectItems" @sort="onSortItems"></crud-table>
@@ -27,9 +27,6 @@
                     </div>
                 </div>
             </div>
-
-            <crud-editpanel v-if="showEditPanel" v-model="editingRow" :fields="crud.meta.fields" :crud="crud"
-                @approve="saveRow" @cancel="cancelEditing"></crud-editpanel>
 
             <div v-if="modalApprove.state != editorTypes.BROWSE" class="modal is-active">
                 <div class="modal-background"></div>
@@ -80,6 +77,7 @@
                 editingRow: {},
                 state: States.BROWSE,
                 baseUrl: '',
+                isReady: false,
                 selectedItems: [],
                 modalApprove: {
                     title: '',
@@ -93,7 +91,6 @@
         },
 
         computed: {
-            showEditPanel(){ return ([States.ADD, States.EDIT].indexOf(this.state)>=0); },
             editorTypes(){ return CrudTypes; },
             isPickMode(){ return this.editorType !== CrudTypes.BROWSE; },
         },
@@ -123,16 +120,6 @@
 
             /******************************** end modal **********************************/
 
-            /****************************** TREE *************************************/
-
-            onTreeUpdate(){
-
-            },
-
-            /****************************** END TREE *************************************/
-
-
-
             /****************************** PICKER *************************************/
 
             pickRows(){
@@ -145,22 +132,6 @@
 
             /****************************** END PICKER *************************************/
 
-            /****************************** EDITOR *************************************/
-            prepareEditPanel(state){
-                this.state = state;
-            },
-            addRow(){
-                this.editingRow = CrudUtils.createMetaObject(this.crud.meta);
-
-                // set default values
-                let fieldsWithDefaults = _.filter(this.crud.meta.fields, (f)=>f.hasOwnProperty('by_default'));
-
-                _.each(fieldsWithDefaults, (f)=>{
-                    this.editingRow[f.type === 'relation' ? _.snakeCase(f.name) : f.name] = f.by_default;
-                });
-
-                this.prepareEditPanel(States.ADD);
-            },
             onTreeChange(items){
 
                 CrudApi.crudTreeMove(this.crud.code, { data: items })
@@ -172,72 +143,34 @@
                     });
             },
 
+            /****************************** EDITOR *************************************/
+            addItem(){
+                Bus.$emit('editpanel:mount', this.crud, null ,this.crud.meta.fields, this.saveItem);
+            },
             editItem(item){
-
-                CrudApi.crudGetItem(this.crud.code, item[this.crud.id])
-                    .then((response)=>{
-                        CrudUtils.spreadJsonFields(response.data, this.crud.meta.fields, true);
-                        this.editingRow = response.data;
-                        console.log('this.editingRow', this.editingRow);
-                        this.prepareEditPanel(States.EDIT);
-                    })
-                    .catch((error)=>{
-                        toastr.error(error, 'Не удалось получить запись');
-                        console.log(error);
-                    });
+                Bus.$emit('editpanel:mount', this.crud, item[this.crud.id] ,this.crud.meta.fields, this.saveItem);
             },
-            cancelEditing(){
-                this.state = States.BROWSE;
-            },
-            saveRow(){
-                console.log('this.editingRow', this.editingRow);
 
-                CrudApi.crudSaveItem(this.crud.code, { item: this.editingRow})
-                    .then((response)=>{
+            saveItem(item){
+                console.log('this.editingRow', item);
 
-                        if (response.data.status === 'success'){
-                            this.editingRow = {};
-                            this.state = "browse";
-                            this.getList();
-                            toastr.success('Запись обновлена');
-                        } else {
-                            if (response.data.status === 'error'){
-
-                                if (response.data.errors) {
-                                    _.forEach(response.data.errors, (f)=>{
-                                        _.forEach(f, (m)=>{
-                                            toastr.error(m);
-                                        });
-                                    });
-
-                                } else {
-                                    toastr.error('Проверьте заполненность полей', 'Ошибка сохранения записи');
-                                }
-                            }
-                        }
-
-
-
-                    })
-                    .catch((error)=>{
-                        toastr.error(error, 'Ошибка сохранения записи');
-                        console.log(error);
-                    });
+                this.getList();
 
             },
             deleteItem(item){
 
                 this.showModal("Удалить запись?","Подтвердите удаление записи",()=>{
-
+                    this.isReady = false;
                     CrudApi.crudDeleteItem(this.crud.code, item[this.crud.id])
                         .then((response)=>{
                             let rowIndex = _.findIndex(this.items, (r)=>{ return (r[this.crud.id] === item[this.crud.id]) });
 
                             this.items.splice(rowIndex, 1);
-
+                            this.isReady = true;
                             toastr.success('Запись удалена');
                         })
                         .catch((error)=>{
+                            this.isReady = true;
                             toastr.error(error, 'Ошибка удаления записи');
                             console.log(error);
                         });
@@ -268,16 +201,17 @@
             },
 
             getList(){
-
+                this.isReady = false;
                 CrudApi.crudGetItems(this.crud.code, { item: this.item, sort: { field: this.sortField, type: this.sortType }})
                     .then((response)=>{
 
                         this.items = response.data.items.map((i)=>{
                             return CrudUtils.spreadJsonFields(i, this.crud.meta.fields, false);
                         });
-
+                        this.isReady = true;
                     })
                     .catch((error)=>{
+                        this.isReady = true;
 
                         toastr.error(error, 'Не удалось получить список');
                     });
@@ -297,5 +231,11 @@
         margin: 20px;
         padding: 20px;
         border-radius: 5px;
+    }
+</style>
+
+<style lang="scss">
+    .is-blured{
+        filter: blur(2px);
     }
 </style>

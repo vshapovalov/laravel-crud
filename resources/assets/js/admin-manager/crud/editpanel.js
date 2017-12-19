@@ -1,26 +1,27 @@
 import VueCrudEditpanel from './components/crud-editpanel.vue';
 
 export default class CrudEditPanel {
-    constructor(crudSelector, crud, editorType, onPick, onCancel){
+    constructor(crudSelector, crud, itemId, fields, onSave, onCancel){
 
         this.crud = crud;
         this.crudSelector = crudSelector;
-        this.editorType = editorType;
-        this.onPick = onPick;
+        this.fields = fields;
+        this.onSave = onSave;
+        this.itemId = itemId;
         this.onCancel = onCancel;
-        this.inputItem = onGetItem ? onGetItem() : undefined;
     }
 
     createEditor(){
         let _this = this;
 
         this.editor =  new Vue({
-            template: '<crud-editpanel id="' + _this.crudSelector + '" :active="active" :crud="crud" :editor-type="editorType" @pick="onPick" @cancel="onCancel" :item="item"></crud-editpanel>',
+            template: '<crud-editpanel id="' + _this.crudSelector + '" :active="active" :crud="crud" ' +
+            ':fields="fields" @save="onSave" @cancel="onCancel" :item-id="itemId"></crud-editpanel>',
             data: {
                 crud: _this.crud,
-                editorType: _this.editorType,
                 active: true,
-                item: _this.inputItem
+                itemId: _this.itemId,
+                fields: _this.fields,
             },
             components: {
                 'crud-editpanel': VueCrudEditpanel
@@ -40,8 +41,9 @@ export default class CrudEditPanel {
                         this.$destroy();
                     });
                 },
-                onPick(value){
-                    if (_this.onPick) { _this.onPick(value); }
+                onSave(item){
+                    if (_this.onSave) _this.onSave(item);
+
                     this.active = false;
                 },
                 onCancel(){

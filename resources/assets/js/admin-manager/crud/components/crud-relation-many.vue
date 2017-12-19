@@ -2,17 +2,14 @@
     <div class="">
         <div class="">
             <div class="control">
-                <a class="button is-success" @click.prevent.stop="addItems">Выбрать</a>
-                <a class="button is-primary" @click.prevent.stop="addRow">Добавить</a>
+                <a class="button is-success" @click.prevent.stop="pickItems">Выбрать</a>
+                <a class="button is-primary" @click.prevent.stop="addItem">Добавить</a>
                 <a class="button is-danger" @click.prevent.stop="delAllItems">Удалить все</a>
             </div>
         </div>
         <crud-table :items="items" :type="crudTypes.PICK_MANY" :crud="crud" @delete="deleteItem" @edit="editItem"
                     :row-actions="tableActions" :with-pivot="field.relation.pivot"
                     :pivot-fields="field.relation.pivot ? field.relation.pivot.fields : []"></crud-table>
-
-        <crud-editpanel v-if="showEditPanel" v-model="editingRow" :fields="crud.meta.fields" :crud="crud"
-                        @approve="saveRow" @cancel="cancelEditing"></crud-editpanel>
 
         <div v-if="modalForm.active" class="modal is-active">
             <div class="modal-background"></div>
@@ -109,9 +106,6 @@
                     active : false,
                     onSuccess: null
                 },
-                /*****  edit panel stuff *****/
-                state: States.BROWSE,
-                editingRow: {},
             }
         },
         computed: {
@@ -127,11 +121,11 @@
             },
             tableActions(){
 
-                let actions = ['delete'];
+                let actions = ['delete', 'edit'];
 
-                if (this.field.relation.pivot){
-                    actions.splice(actions.length, 0, 'edit');
-                }
+//                if (this.field.relation.pivot){
+//                    actions.splice(actions.length, 0, 'edit');
+//                }
 
                 return actions;
             },
@@ -143,74 +137,7 @@
             }
         },
         methods: {
-            /*************** edit panel stuff *******************/
 
-            prepareEditPanel(state){
-                this.state = state;
-            },
-            addRow(){
-                this.editingRow = CrudUtils.createMetaObject(this.crud.meta);
-
-                // set default values
-                let fieldsWithDefaults = _.filter(this.crud.meta.fields, (f)=>f.hasOwnProperty('by_default'));
-
-                _.each(fieldsWithDefaults, (f)=>{
-                    this.editingRow[f.type === 'relation' ? _.snakeCase(f.name) : f.name] = f.by_default;
-                });
-
-                this.prepareEditPanel(States.ADD);
-            },
-            editItem(item){
-
-                CrudApi.crudGetItem(this.crud.code, item[this.crud.id])
-                    .then((response)=>{
-                        CrudUtils.spreadJsonFields(response.data, this.crud.meta.fields, true);
-                        this.editingRow = response.data;
-                        console.log('this.editingRow', this.editingRow);
-                        this.prepareEditPanel(States.EDIT);
-                    })
-                    .catch((error)=>{
-                        toastr.error(error, 'Не удалось получить запись');
-                        console.log(error);
-                    });
-            },
-            cancelEditing(){
-                this.state = States.BROWSE;
-            },
-            saveRow(){
-                console.log('this.editingRow', this.editingRow);
-
-                CrudApi.crudSaveItem(this.crud.code, { item: this.editingRow})
-                    .then((response)=>{
-
-                        if (response.data.status === 'success'){
-                            this.editingRow = {};
-                            this.state = States.BROWSE;
-                        } else {
-                            if (response.data.status === 'error'){
-
-                                if (response.data.errors) {
-                                    _.forEach(response.data.errors, (f)=>{
-                                        _.forEach(f, (m)=>{
-                                            toastr.error(m);
-                                        });
-                                    });
-
-                                } else {
-                                    toastr.error('Проверьте заполненность полей', 'Ошибка сохранения записи');
-                                }
-                            }
-                        }
-
-
-
-                    })
-                    .catch((error)=>{
-                        toastr.error(error, 'Ошибка сохранения записи');
-                        console.log(error);
-                    });
-
-            },
 
             /***************************************** tabs ***************************/
 
@@ -245,6 +172,16 @@
 
             /***************************************** end modal edit form ***************************/
 
+            addItem(){
+                Bus.$emit('editpanel:mount', this.crud, null ,this.crud.meta.fields, this.saveItem);
+            },
+
+            saveItem(item){
+               this.mergedItems([item]);
+
+
+            },
+
             delAllItems(){
                 if (this.field.readonly)
                 {
@@ -271,8 +208,15 @@
                     return;
                 }
 
-                this.pivotRow = item.pivot;
-                this.showModalForm();
+                if (this.field.relation.pivot){
+                    this.pivotRow = item.pivot;
+                    this.showModalForm();
+                } else {
+
+                    Bus.$emit('editpanel:mount', this.crud, item[this.crud.id] ,this.crud.meta.fields, this.saveItem);
+
+                }
+
             },
             emitChanges(items){
                 if (this.field.readonly)
@@ -283,7 +227,7 @@
 
                 this.$emit("change", items);
             },
-            addItems(){
+            pickItems(){
                 if (this.field.readonly)
                 {
                     toastr.info("Редактирование запрещено");
@@ -316,22 +260,23 @@
                             i.isSelected = false;
                         }
 
-                        console.log('this.field', this.field);
-
                         if (this.field.relation.pivot){
 
-                            let emptyPivot = CrudUtils.createMetaObject(this.field.relation.pivot);
-                            this.$set(i, 'pivot', emptyPivot);
+                            let sameItem = _.find(this.items, (ti)=>ti[this.crud.id] === i[this.crud.id]);
 
+                            if (sameItem) {
+                                this.$set(i, 'pivot', sameItem.pivot);
+                            } else {
+                                let emptyPivot = CrudUtils.createMetaObject(this.field.relation.pivot);
+                                this.$set(i, 'pivot', emptyPivot);
+                            }
                         }
 
                     });
 
-                    let items = this.items;
+                    pickedItems.splice(pickedItems.length, 0, ...this.items);
 
-                    items.splice(items.length, 0, ...pickedItems);
-
-                    items = _.uniqBy(items, this.crud.id);
+                    let items = _.uniqBy(pickedItems, this.crud.id);
 
                     this.emitChanges(items);
 

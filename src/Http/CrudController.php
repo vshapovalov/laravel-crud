@@ -71,10 +71,14 @@ class CrudController extends BaseController
 			'status' => 'success'
 		];
 
-		if ($errors = Crud::saveCrudItem($code, $request->input('item'))){
+		if ($errors = Crud::validateItem($code, $request->input('item'))){
 			$response['status'] = 'error';
 			$response['errors'] = $errors;
-		}
+			return $response;
+
+		};
+
+		$response['item'] = Crud::saveCrudItem( $code, $request->input('item') ) ;
 
 		return $response;
 	}

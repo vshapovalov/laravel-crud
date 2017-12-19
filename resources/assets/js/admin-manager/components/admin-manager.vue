@@ -21,6 +21,7 @@
     import MediaLibrary from './../media/library';
     import CrudUtils from './../crud/utils';
     import CrudEditor from './../crud/editor';
+    import CrudEditPanel from './../crud/editpanel';
     import FormBehaviorTypes from './../utils/types';
 
     // TODO: check for auth type
@@ -53,12 +54,16 @@
             },
 
             mountActiveInstance(){
-                if (this.activeInstance){
+                if (this.activeInstance) this.mountInstance(this.activeInstance);
+            },
+
+            mountInstance(instance){
+                if (instance){
                     let elemetId = 'component' + CrudUtils.randomInteger(1, 10000);
 
                     $(AdminManager.getWorkspaceSelector()).append(`<div id="${elemetId}"></div>`);
 
-                    this.activeInstance.show(elemetId);
+                    instance.show(elemetId);
                 }
             },
 
@@ -73,7 +78,10 @@
                 Bus.$emit(menuItem.action, menuItem.action, menuItem.caption);
 
             },
-
+            mountEditPanel(crud, item,fields, onSave = null, onCancel = null){
+                let instance = new CrudEditPanel(null, crud, item,fields, onSave, onCancel);
+                Bus.$emit('admin:instance:mount', instance, false);
+            },
             mountMediaLibrary(){
                 let instance = new MediaLibrary(null, FormBehaviorTypes.BROWSE, null ,null, null);
                 Bus.$emit('admin:instance:mount', instance);
@@ -86,10 +94,13 @@
                 let instance = new CrudEditor(null, crud,  FormBehaviorTypes.BROWSE, null, null, null);
                 Bus.$emit('admin:instance:mount', instance);
             },
-            onInstanceMounted(instance){
-                this.closeActiveInstance();
-                this.setActiveInstance(instance);
-                this.mountActiveInstance();
+            onInstanceMounted(instance, freeActiveInstance = true){
+                if (freeActiveInstance){
+                    this.closeActiveInstance();
+                    this.setActiveInstance(instance);
+                }
+
+                this.mountInstance(instance);
             },
             onUrlRender(url){
 
@@ -121,6 +132,7 @@
 
             registerDefaultComponents(){
                 Bus.$on('medialibrary:mount', this.mountMediaLibrary);
+                Bus.$on('editpanel:mount', this.mountEditPanel);
 
                 _.each(this.cruds, (crud)=>{
                     Bus.$on(`crud:${crud.code}:mount`, this.mountCrud);
