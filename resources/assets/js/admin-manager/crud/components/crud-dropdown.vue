@@ -45,6 +45,13 @@
                 rows: []
             }
         },
+        watch:{
+            value(val, oldVal){
+
+                this.parseValue();
+
+            }
+        },
         computed: {
             isSingleMode(){
 
@@ -95,42 +102,45 @@
                 }
 
                 this.emitChanges();
-            }
-        },
-        mounted() {
+            },
+            parseValue(){
+                if (this.field.additional && this.field.additional.values){
 
-            console.log('this.value',this.value);
+                    this.rows = this.field.additional.values;
 
-            if (this.field.additional && this.field.additional.values){
+                    if (this.value){
 
-                this.rows = this.field.additional.values;
+                        if (this.isSingleMode) {
 
-                if (this.value){
+                            this.selectedRow = _.find(this.rows,(r)=> r.key == this.value );
+                        } else {
 
-                    if (this.isSingleMode) {
+                            let valArr;
 
-                        this.selectedRow = _.find(this.rows,(r)=> r.key == this.value );
-                    } else {
+                            try {
+                                valArr = JSON.parse(this.value);
+                            } catch(e){
+                            }
 
-                        let valArr;
+                            if (valArr) {
 
-                        try {
-                            valArr = JSON.parse(this.value);
-                        } catch(e){
-                        }
+                                this.rows.forEach((r)=>{
 
-                        if (valArr) {
+                                    if (valArr.indexOf(r.key)>=0)
 
-                            this.rows.forEach((r)=>{
-
-                                if (valArr.indexOf(r.key)>=0)
-
-                                    this.toggleRowSelected(r);
-                            });
+                                        this.toggleRowSelected(r);
+                                });
+                            }
                         }
                     }
                 }
-            }
+            },
+        },
+
+
+        mounted() {
+            this.parseValue();
+
         },
         destroyed(){
         }

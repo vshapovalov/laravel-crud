@@ -95034,6 +95034,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             rows: []
         };
     },
+    watch: {
+        value: function value(val, oldVal) {
+
+            this.parseValue();
+        }
+    },
     computed: {
         isSingleMode: function isSingleMode() {
 
@@ -95090,42 +95096,44 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }
 
             this.emitChanges();
-        }
-    },
-    mounted: function mounted() {
-        var _this = this;
+        },
+        parseValue: function parseValue() {
+            var _this = this;
 
-        console.log('this.value', this.value);
+            if (this.field.additional && this.field.additional.values) {
 
-        if (this.field.additional && this.field.additional.values) {
+                this.rows = this.field.additional.values;
 
-            this.rows = this.field.additional.values;
+                if (this.value) {
 
-            if (this.value) {
+                    if (this.isSingleMode) {
 
-                if (this.isSingleMode) {
-
-                    this.selectedRow = _.find(this.rows, function (r) {
-                        return r.key == _this.value;
-                    });
-                } else {
-
-                    var valArr = void 0;
-
-                    try {
-                        valArr = JSON.parse(this.value);
-                    } catch (e) {}
-
-                    if (valArr) {
-
-                        this.rows.forEach(function (r) {
-
-                            if (valArr.indexOf(r.key) >= 0) _this.toggleRowSelected(r);
+                        this.selectedRow = _.find(this.rows, function (r) {
+                            return r.key == _this.value;
                         });
+                    } else {
+
+                        var valArr = void 0;
+
+                        try {
+                            valArr = JSON.parse(this.value);
+                        } catch (e) {}
+
+                        if (valArr) {
+
+                            this.rows.forEach(function (r) {
+
+                                if (valArr.indexOf(r.key) >= 0) _this.toggleRowSelected(r);
+                            });
+                        }
                     }
                 }
             }
         }
+    },
+
+    mounted: function mounted() {
+        this.parseValue();
     },
     destroyed: function destroyed() {}
 });

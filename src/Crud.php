@@ -2,6 +2,7 @@
 
 namespace Vshapovalov\Crud;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Vshapovalov\Crud\Models\AdminSetting;
 use Vshapovalov\Crud\Models\MenuItem;
@@ -45,8 +46,8 @@ class Crud {
 			foreach($crud['meta']['fields'] as &$field){
 				if (isset($field['by_default']) && is_callable($field['by_default'])){
 					$field['by_default'] = $field['by_default']();
-					debug($field['name']);
-					debug($field['by_default']);
+//					debug($field['name']);
+//					debug($field['by_default']);
 				}
 
 				if ( $field['type'] == 'relation' && isset($field['relation']['pivot']) ) {
@@ -151,19 +152,21 @@ class Crud {
 
 	function menu($code, $viewName = null){
 
-		if (!$this->menuItems) $this->loadMenuItems();
+		return Cache::remember('menu.'.$code, 1440, function() use ($viewName, $code){
+			if (!$this->menuItems) $this->loadMenuItems();
 
-		if (is_string($code)){
-			$searchField = 'code';
-		} else {
-			$searchField = 'id';
-		}
+			if (is_string($code)){
+				$searchField = 'code';
+			} else {
+				$searchField = 'id';
+			}
 
-		$menu = array_first($this->menuItems, function($value) use ($code, $searchField){
-			return $value->{$searchField} == $code;
+			$menu = array_first($this->menuItems, function($value) use ($code, $searchField){
+				return $value->{$searchField} == $code;
+			});
+
+			return view($viewName ? $viewName : 'crud::menu', ['menuItem' => $menu])->render();
 		});
-
-		return view($viewName ? $viewName : 'crud::menu', ['menuItem' => $menu])->render();
 	}
 
 	function getCrudItemsList($crud, $inputItem, $sortOptions){
@@ -278,15 +281,10 @@ class Crud {
 		return false;
 	}
 
-
-
 	function saveCrudItem($crud, $inputValues){
 
 		if (is_string($crud))
 			$crud = $this->cruds[$crud];
-
-
-
 
 		if (isset($inputValues[$crud['id']])) {
 
