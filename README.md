@@ -6,6 +6,10 @@ Manage your data
 
 Store files in media library
 
+![crud table](http://teacup.kz/laravel-crud/crud-table.png)
+![edit_panel](http://teacup.kz/laravel-crud/edit-panel.png)
+![media_library](http://teacup.kz/laravel-crud/media-library.png)
+
 ## Crud admin has
   
 - textbox (password, masked, slugify)
