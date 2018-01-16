@@ -2,7 +2,12 @@
 
 namespace Vshapovalov\Crud\Models;
 
-class CrudField extends CrudModel
+use Illuminate\Database\Eloquent\Model;
+
+
+class CrudField extends Model
 {
-    //
+    function relation(){
+    	return $this->belongsTo(CrudRelation::class, 'crud_relation_id')->with(['crud']);
+    }
 }

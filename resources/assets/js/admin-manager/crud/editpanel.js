@@ -1,11 +1,11 @@
 import VueCrudEditpanel from './components/crud-editpanel.vue';
 
 export default class CrudEditPanel {
-    constructor(crudSelector, crud, itemId, fields, onSave, onCancel){
+    constructor(crudSelector, crud, itemId, onSave, onCancel){
 
         this.crud = crud;
         this.crudSelector = crudSelector;
-        this.fields = fields;
+        this.fields = crud.fields;
         this.onSave = onSave;
         this.itemId = itemId;
         this.onCancel = onCancel;
@@ -16,7 +16,7 @@ export default class CrudEditPanel {
 
         this.editor =  new Vue({
             template: '<crud-editpanel id="' + _this.crudSelector + '" :active="active" :crud="crud" ' +
-            ':fields="fields" @save="onSave" @cancel="onCancel" :item-id="itemId"></crud-editpanel>',
+            '@save="onSave" @cancel="onCancel" :item-id="itemId"></crud-editpanel>',
             data: {
                 crud: _this.crud,
                 active: true,

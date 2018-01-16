@@ -145,10 +145,10 @@
 
             /****************************** EDITOR *************************************/
             addItem(){
-                Bus.$emit('editpanel:mount', this.crud, null ,this.crud.meta.fields, this.saveItem);
+                Bus.$emit('editpanel:mount', this.crud, null, this.saveItem);
             },
             editItem(item){
-                Bus.$emit('editpanel:mount', this.crud, item[this.crud.id] ,this.crud.meta.fields, this.saveItem);
+                Bus.$emit('editpanel:mount', this.crud, item[this.crud.id], this.saveItem);
             },
 
             saveItem(item){
@@ -206,7 +206,7 @@
                     .then((response)=>{
 
                         this.items = response.data.items.map((i)=>{
-                            return CrudUtils.spreadJsonFields(i, this.crud.meta.fields, false);
+                            return CrudUtils.spreadJsonFields(i, this.crud.fields, false);
                         });
                         this.isReady = true;
                     })

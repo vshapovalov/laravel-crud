@@ -6,16 +6,17 @@
                 <p class="modal-card-title">{{ editState === editStates.ADD ? 'Создание' : 'Редактирование' }} [{{ crud.name }}]</p>
                 <button class="delete" aria-label="close" @click="doCancel"></button>
             </header>
+            <div class="tabs">
+                <ul>
+                    <li v-for="tab in crudTabs" :class="{'is-active' : activeTab == tab}"><a @click="setActiveTab(tab)">{{ tab }}</a></li>
+                </ul>
+            </div>
             <section class="modal-card-body">
-                <div  class="edit-form">
-                    <div class="tabs">
-                        <ul>
-                            <li v-for="tab in crudTabs" :class="{'is-active' : activeTab == tab}"><a @click="setActiveTab(tab)">{{ tab }}</a></li>
-                        </ul>
-                    </div>
+                <div class="edit-form">
 
-                    <div v-for="tab in crudTabs" v-show="activeTab == tab">
-                        <div class="field " v-for="field in crudEditableFields" v-if="field.tab == tab || (!field.tab & tab == 'Основные параметры')">
+
+                    <div class="flex-tab" v-for="tab in crudTabs" v-show="activeTab == tab">
+                        <div class="field " :class="[getFieldWidth(field)]" v-for="field in crudEditableFields" v-if="field.tab == tab || (!field.tab & tab == 'Основные параметры')">
                             <label class="label">{{ field.caption }}<small v-show="field.description"> ({{field.description }})</small></label>
 
                             <div class="control">
@@ -31,13 +32,13 @@
                                         :field="field"></crud-dropdown>
                                 <crud-relation-one
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO || field.relation.type === relationTypes.HAS_ONE))"
-                                        v-model="item[field.json ? field.relation.name : toSnake(field.relation.name)]" :crud-code="field.relation.crud" :field="field" :item="item"></crud-relation-one>
+                                        v-model="item[field.json ? field.name : toSnake(field.name)]" :field="field"></crud-relation-one>
                                 <crud-relation-many
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && field.relation.type == relationTypes.HAS_MANY)"
-                                        v-model="item[toSnake(field.relation.name)]" :crud-code="field.relation.crud" :field="field" :item="item"></crud-relation-many>
+                                        v-model="item[toSnake(field.name)]" :field="field" :item="item"></crud-relation-many>
                                 <crud-relation-many
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && field.relation.type == relationTypes.BELONGS_TO_MANY)"
-                                        v-model="item[toSnake(field.relation.name)]" :crud-code="field.relation.crud" :field="field" :item="item"></crud-relation-many>
+                                        v-model="item[toSnake(field.name)]" :field="field" :item="item"></crud-relation-many>
                             </div>
                         </div>
                     </div>
@@ -62,7 +63,7 @@
 
     export default {
         name: 'crud-editpanel',
-        props: ['item-id', 'fields', 'crud', 'active'],
+        props: ['item-id', 'crud', 'active'],
         data: function () {
             return {
                 activeTab: '',
@@ -95,17 +96,21 @@
                     }
                 }
 
-                return _.filter( this.fields, (f)=> f.visibility.indexOf(visibilityFilter) >= 0 );
+                return _.filter( this.crud.fields, (f)=> f.visibility.indexOf(visibilityFilter) >= 0 );
 
             },
             crudTabs(){
-                return _.keys(_.groupBy(this.fields, (f)=> f.tab ? f.tab : "Основные параметры") );
+                return _.keys(_.groupBy(this.crud.fields, (f)=> f.tab ? f.tab : "Основные параметры") );
             },
             fieldTypes(){ return FieldTypes; },
             relationTypes(){ return RelationTypes; },
         },
 
         methods: {
+            getFieldWidth(field){
+                return 'is-' + field.columns;
+            },
+
             onSlugify(field){
                 if(field.additional && field.additional.slugify){
                     this.item[field.additional.slugify] = slugify(this.item[field.name]).toLowerCase();
@@ -136,17 +141,17 @@
 
                 if (field.type === FieldTypes.DYNAMIC){
 
-                    if (field.dynamic && field.dynamic.type === 'relation') {
+                    if (field.additional && field.additional.type === 'related') {
 
-                        let [fieldName, relationField] = field.dynamic.from.split('.');
+                        let [fieldName, relationField] = field.additional.from.split('.');
 
                         result = this.item[_.snakeCase(fieldName)][relationField];
 
                     } else {
 
-                        if (field.dynamic && field.dynamic.type === 'field') {
+                        if (field.additional && field.additional.type === 'field') {
 
-                            result = this.item[field.dynamic.from];
+                            result = this.item[field.additional.from];
                         }
                     }
                 } else {
@@ -169,6 +174,8 @@
 
             doSave(){
                 this.isReady = false;
+
+                console.log('this.item', this.item);
 
                 CrudApi.crudSaveItem(this.crud.code, { item: this.item})
                     .then((response)=>{
@@ -208,19 +215,20 @@
         beforeMount() {
             this.activeTab = this.crudTabs[0];
             if (!this.itemId) {
-                this.item = CrudUtils.createMetaObject(this.crud.meta);
-                CrudUtils.spreadJsonFields(this.item, this.crud.meta.fields, true);
+                this.item = CrudUtils.createMetaObject(this.crud.fields);
+                console.log('editpanel:newitem', this.item);
+                CrudUtils.spreadJsonFields(this.item, this.crud.fields, true);
                 this.isReady = true;
             } else {
                 CrudApi.crudGetItem(this.crud.code, this.itemId)
                     .then((response)=>{
-                        CrudUtils.spreadJsonFields(response.data, this.crud.meta.fields, true);
+                        CrudUtils.spreadJsonFields(response.data, this.crud.fields, true);
                         this.item = response.data;
                         this.isReady = true;
                     })
                     .catch((error)=>{
                         toastr.error(error, 'Не удалось получить запись');
-                        console.error('edit panel - get item:', error);
+                        console.error('editpanel:getitem', error);
                         this.isReady = true;
                     });
             }
@@ -228,12 +236,48 @@
     }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+
+
     .is-blured{
         filter: blur(2px);
     }
 
     .tabs{
-        margin-top: 0.25em;
+        background: white;
+        margin: 0 !important;
+        flex-shrink: 0;
+
+        & > ul > li:first-child {
+            margin-top: 0.25em;
+        }
+    }
+
+    .field{
+        padding-left: 5px;
+
+        &.is-3{
+            width: percentage(1/4);
+        }
+
+        &.is-4{
+            width: percentage(1/3);
+        }
+
+        &.is-6{
+            width: percentage(1/2);
+        }
+
+        &.is-12{
+            width: percentage(1);
+        }
+    }
+
+    .flex-tab{
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .modal-card-body {
+        padding: 0 20px 0 20px;
     }
 </style>

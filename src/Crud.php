@@ -2,10 +2,15 @@
 
 namespace Vshapovalov\Crud;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Vshapovalov\Crud\Models\AdminSetting;
 use Vshapovalov\Crud\Models\MenuItem;
+use Vshapovalov\Crud\Models\CrudForm;
+use Vshapovalov\Crud\Models\CrudMenu;
+use Vshapovalov\Crud\Models\Role;
 
 class Crud {
 
@@ -18,12 +23,17 @@ class Crud {
 
 	function __construct() {
 		$this->config = config('cruds');
+	}
 
-		foreach($this->config['list'] as &$crud){
-			$this->cruds[$crud['code']] = $crud;
+	function loadCrudForms(){
+		$cruds = [];
+
+		foreach(CrudForm::with(['fields', 'scopes'])->get()->toArray() as $crud){
+			$cruds[$crud['code']] = $crud;
 		}
 
-		$this->menu = $this->config['menu'];
+		return $cruds;
+
 	}
 
 	public function routes()
@@ -41,33 +51,104 @@ class Crud {
 		$this->menuItems = MenuItem::with( 'children' )->get();
 	}
 
-	function setDefaultValues(){
-		foreach ($this->config['list'] as &$crud){
-			foreach($crud['meta']['fields'] as &$field){
+	function setDefaultValues($cruds){
+
+		foreach ($cruds as &$crud){
+			foreach($crud['fields'] as &$field){
 				if (isset($field['by_default']) && is_callable($field['by_default'])){
 					$field['by_default'] = $field['by_default']();
-//					debug($field['name']);
-//					debug($field['by_default']);
 				}
 
-				if ( $field['type'] == 'relation' && isset($field['relation']['pivot']) ) {
+				$field['visibility'] = json_decode($field['visibility'], true);
 
-					foreach($field['relation']['pivot']['fields'] as &$pivotfield){
+				if (isset($field['additional'])) {
+					$field['additional'] = json_decode($field['additional'], true);
+				}
+
+				if ( $field['type'] == 'relation' && isset($field['relation']['pivot']) && count($field['relation']['pivot'])) {
+
+					foreach($field['relation']['pivot'] as &$pivotfield){
 						if (isset($pivotfield['by_default']) && is_callable($pivotfield['by_default'])){
 							$pivotfield['by_default'] = $pivotfield['by_default']();
+						}
+
+						$pivotfield['visibility'] = json_decode($pivotfield['visibility'], true);
+
+						if (isset($pivotfield['additional'])) {
+							$pivotfield['additional'] = json_decode($pivotfield['additional'], true);
 						}
 					}
 				}
 			}
 		}
+
+		return $cruds;
 	}
 
 	function getCrudList(){
+
+		$this->initCrudForms();
+
 		return $this->cruds;
 	}
 
+	function initCrudForms(){
+
+		if (!count($this->cruds)){
+
+			$this->cruds = Cache::remember( 'crud.list', 1440, function(){
+				$cruds = $this->loadCrudForms();
+
+				$cruds = $this->setDefaultValues($cruds);
+
+				return $cruds;
+			});
+
+			$this->config['list'] = $this->cruds;
+		}
+	}
+
+	function loadCrudMenu(){
+
+		$roles = Role::whereHas('users', function($q){
+			$q->where('id', '=', Auth::user()->id);
+		})->get()->pluck('id');
+
+		$menuItems = CrudMenu::where('status','enabled')->whereHas('roles', function($q) use ($roles){
+			$q->whereIn('id', $roles);
+		})->orDoesntHave('roles')->get()->toArray();
+
+		$keyedItems = [];
+
+		array_walk($menuItems, function($item) use (&$keyedItems){
+			$keyedItems[ $item['id'] ] = $item;
+		});
+
+		foreach ($keyedItems as &$item){
+
+			if (!empty($item['parent_id']) && isset($keyedItems[ $item['parent_id'] ])) {
+				$keyedItems[ $item['parent_id'] ]['items'][] = $item;
+			}
+		}
+
+		$menu = [];
+
+		array_walk($keyedItems, function($item) use (&$menu){
+			if ( empty($item['parent_id']))
+				$menu[] = $item;
+		});
+
+		$this->menu = $menu;
+
+		$this->config['menu'] = $menu;
+	}
+
 	function getCrudConfig(){
-		$this->setDefaultValues();
+
+		$this->initCrudForms();
+
+		$this->loadCrudMenu();
+
 		return $this->config;
 	}
 
@@ -76,7 +157,38 @@ class Crud {
 	}
 
 	function getCrudByCode($code){
+		$this->initCrudForms();
+
 		return $this->cruds[$code];
+	}
+
+	function getModelRelations($model){
+
+		$relationships = [];
+
+		foreach((new \ReflectionClass($model))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method)
+		{
+			if ($method->class != get_class($model) ||
+			    !empty($method->getParameters()) ||
+			    $method->getName() == __FUNCTION__) {
+				continue;
+			}
+
+			try {
+				$return = $method->invoke($model);
+
+				if ($return instanceof Relation) {
+					$relationships[$method->getName()] = [
+						'type' => (new \ReflectionClass($return))->getShortName(),
+						'model' => (new \ReflectionClass($return->getRelated()))->getName(),
+						'foreign_key' => ((new \ReflectionClass($return))->getShortName() == 'HasMany') ? $return->getExistenceCompareKey() : ''
+					];
+				}
+			} catch(\ErrorException $e) {}
+		}
+
+		return $relationships;
+
 	}
 
 	function getModelByCrud($crud, $id, $withRelations){
@@ -89,7 +201,7 @@ class Crud {
 
 		if ($withRelations) {
 
-			$relationships = array_keys($item->relationships());
+			$relationships = array_keys($this->getModelRelations($item));
 
 			$qb->with($relationships);
 		}
@@ -189,8 +301,8 @@ class Crud {
 //		$qb->select($fields);
 
 		$relationFields = array_map(function($f){
-			return $f['relation']['name'];
-		}, array_filter($crud['meta']['fields'], function($f){
+			return $f['name'];
+		}, array_filter($crud['fields'], function($f){
 			return $f['type'] == 'relation' && (!isset($f['json']) || (isset($f['json']) && !$f['json']));
 		}));
 
@@ -207,15 +319,13 @@ class Crud {
 
 				if (isset($scope['name']) && !empty($scope['name']))
 				{
-					$inputParams = [];
+					if (isset($scope['params']) && count($scope['params']) && !empty($inputItem)){
 
-					if (isset($scope['params']) && count($scope['params'])){
-
-						if (empty($inputItem)) continue;
+						$inputParams = [];
 
 						forEach($scope['params'] as $param){
-
-							$inputParams[] = $inputItem[$param];
+							if (isset($inputItem[$param['name']]))
+								$inputParams[] = $inputItem[$param['name']];
 						}
 
 						$qb = $qb->{$scope['name']}(...$inputParams);
@@ -223,7 +333,6 @@ class Crud {
 
 						$qb = $qb->{$scope['name']}();
 					}
-
 				}
 			}
 		}
@@ -237,7 +346,7 @@ class Crud {
 
 	function deleteCrudItem($crud, $id){
 		if (is_string($crud))
-			$crud = $this->cruds[$crud];
+			$crud = $this->getCrudByCode($crud);
 
 		if (!isset($crud['type']) || $crud['type'] == 'list') {
 			call_user_func($crud['model']."::whereKey", $id)->delete();
@@ -258,10 +367,10 @@ class Crud {
 	function validateItem($crud, $inputValues){
 
 		if (is_string($crud))
-			$crud = $this->cruds[$crud];
+			$crud = $this->getCrudByCode($crud);
 
-		$validatingFields = array_filter($crud['meta']['fields'], function($field){
-			return isset($field['validation']);
+		$validatingFields = array_filter($crud['fields'], function($field){
+			return isset($field['validation']) && !empty($field['validation']);
 		});
 
 		$validationRules = array_combine(
@@ -274,6 +383,7 @@ class Crud {
 			$validator = Validator::make($inputValues, $validationRules);
 
 			if ($validator->fails()){
+
 				return $validator->errors();
 			}
 		}
@@ -287,18 +397,22 @@ class Crud {
 			$crud = $this->cruds[$crud];
 
 		if (isset($inputValues[$crud['id']])) {
-
 			$id = $inputValues[$crud['id']];
 
 			$item = $this->getModelByCrud($crud, $id, true);
 		} else {
-
 			$item = new $crud['model'];
 		}
 
 		$itemSaved = false;
 
-		foreach ($crud['meta']['fields'] as $field){
+		// sort fields - relations field to end
+
+		$crud['fields'] = array_sort($crud['fields'], function($val, $key){
+			return $val['type'] == 'relation' ? 1 : 0;
+		});
+
+		foreach ($crud['fields'] as $field){
 
 			if ($field['type'] == 'dynamic'){
 
@@ -410,27 +524,27 @@ class Crud {
 
 				$crudField = null;
 
-				if (isset($inputValues[snake_case($field['relation']['name'])])) {
-					$crudField = $inputValues[snake_case($field['relation']['name'])];
+				if (isset($inputValues[snake_case($field['name'])])) {
+					$crudField = $inputValues[snake_case($field['name'])];
 				} else {
 					if (isset($crudField)) unset($crudField);
 				}
 
-				$relationCrud = $this->getCrudByCode($field['relation']['crud']);
+				$relationCrud = $this->getCrudByCode($field['relation']['crud']['code']);
 
 				/************************************ belongsTo ************************************/
 
-				if ( $field['relation']['type'] == 'belongsTo' ){
+				if ( $field['relation']['type'] == 'belongsTo'){
 
 					if (!isset($crudField) || empty($crudField)){
-						$item->{$field['relation']['name']}()->dissociate();
+						$item->{$field['name']}()->dissociate();
 
 						continue;
 					}
 
 					$relatedItem = $this->getModelByCrud($relationCrud, $crudField[$relationCrud['id']], false);
 
-					$item->{$field['relation']['name']}()->associate($relatedItem);
+					$item->{$field['name']}()->associate($relatedItem);
 
 					continue;
 				}
@@ -446,11 +560,11 @@ class Crud {
 
 					if (isset($id)){
 
-						$relationShips = $item->relationships();
+						$relationShips = $this->getModelRelations($item);
 
-						$relationForeignKey = $relationShips[$field['relation']['name']]['foreign_key'];
+						$relationForeignKey = $relationShips[$field['name']]['foreign_key'];
 
-						forEach($item->{$field['relation']['name']} as $relatedItem){
+						forEach($item->{$field['name']} as $relatedItem){
 							$relatedItem->{$relationForeignKey} = null;
 							$relatedItem->save();
 						}
@@ -462,10 +576,12 @@ class Crud {
 
 							$relatedItem = $this->getModelByCrud($relationCrud, $crudRelatedItem[$relationCrud['id']], true);
 
-							$item->{$field['relation']['name']}()->save($relatedItem);
+							$item->{$field['name']}()->save($relatedItem);
 
 						}
 					}
+
+					continue;
 				}
 
 				/************************************ belongsToMany ************************************/
@@ -483,9 +599,9 @@ class Crud {
 
 						// extract json root fields names
 						$jsonPivotRootFields = [];
-						if (isset($field['relation']['pivot'])){
+						if (isset($field['relation']['pivot']) && count($field['relation']['pivot'])){
 
-							array_walk($field['relation']['pivot']['fields'], function($val, $key)use(&$jsonPivotRootFields){
+							array_walk($field['relation']['pivot'], function($val, $key)use(&$jsonPivotRootFields){
 								if (isset($val['json']) && $val['json']) {
 
 									$jsonPivotRootFields[ explode('->', $val['name'])[0] ] = '{}';
@@ -493,16 +609,14 @@ class Crud {
 							});
 						}
 
-						debug($jsonPivotRootFields);
-
 						forEach ( $crudField as $crudRelatedItem ) {
 
-							if ( isset( $field['relation']['pivot'] ) ) {
+							if ( isset( $field['relation']['pivot'] ) && count($field['relation']['pivot']) ) {
 
 								$pivotValues = [];
 								$jsonPivotNonJsonFields = [];
 
-								forEach ( $field['relation']['pivot']['fields'] as $pivotField ) {
+								forEach ( $field['relation']['pivot'] as $pivotField ) {
 									if (isset($crudRelatedItem['pivot'][ $pivotField['name'] ])) {
 										$pivotValues[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
 
@@ -512,16 +626,14 @@ class Crud {
 									}
 								}
 
-								debug($jsonPivotNonJsonFields);
-
 								if (count($jsonPivotRootFields)) {
-									$relatedItemExists = $item->{$field['relation']['name']}->contains(function($val, $key) use ($relationCrud, $crudRelatedItem){
+									$relatedItemExists = $item->{$field['name']}->contains(function($val, $key) use ($relationCrud, $crudRelatedItem){
 										return $val->{$relationCrud['id']} == $crudRelatedItem[ $relationCrud['id'] ];
 									});
 
 									if (!$relatedItemExists) {
 
-										$item->{$field['relation']['name']}()->attach($crudRelatedItem[ $relationCrud['id'] ], array_merge($jsonPivotNonJsonFields, $jsonPivotRootFields));
+										$item->{$field['name']}()->attach($crudRelatedItem[ $relationCrud['id'] ], array_merge($jsonPivotNonJsonFields, $jsonPivotRootFields));
 									}
 								}
 
@@ -533,7 +645,7 @@ class Crud {
 					}
 
 
-					$item->{$field['relation']['name']}()->sync($relationIds);
+					$item->{$field['name']}()->sync($relationIds);
 
 				}
 
@@ -549,7 +661,7 @@ class Crud {
 
 					$relatedItem = $this->getModelByCrud($relationCrud, $crudField[$relationCrud['id']], false);
 
-					$item->{$field['relation']['name']}()->save($relatedItem);
+					$item->{$field['name']}()->save($relatedItem);
 				}
 			}
 		}

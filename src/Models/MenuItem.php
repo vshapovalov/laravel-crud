@@ -2,10 +2,11 @@
 
 namespace Vshapovalov\Crud\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Vshapovalov\Crud\TreeableTrait;
 
-class MenuItem extends CrudModel
+class MenuItem extends Model
 {
 	use TreeableTrait;
 

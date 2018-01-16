@@ -36,22 +36,22 @@ export default class Utils {
                 if ((f.type === FieldTypes.RELATION) &&
                     (f.relation.type === RelationTypes.HAS_MANY || f.relation.type === RelationTypes.BELONGS_TO_MANY ) ){
 
-                    let relationCrud = AdminManager.getCrud(f.relation.crud);
+                    let relationCrud = AdminManager.getCrud(f.relation.crud.code);
 
                     _.each(item[ _.snakeCase(f.name) ], (relatedItem)=>{
-                        this.spreadJsonFields(relatedItem, relationCrud.meta.fields, false);
+                        this.spreadJsonFields(relatedItem, relationCrud.fields, false);
                     });
                 }
             });
 
             let jsonPivotFields = _.filter(fields, (f)=>{
                 return f.type === 'relation' && f.relation.type === 'belongsToMany'
-                    && f.relation.pivot && _.some(f.relation.pivot.fields, (f)=>f.json);
+                    && f.relation.pivot && _.some(f.relation.pivot, (f)=>f.json);
             });
 
             _.each(jsonPivotFields, (f)=>{
 
-                let jsonFields = _.map(_.filter(f.relation.pivot.fields, (f)=> f.json), (mf)=>{
+                let jsonFields = _.map(_.filter(f.relation.pivot, (f)=> f.json), (mf)=>{
                     let jPath = mf.name.split('->');
                     let rootFieldName = jPath[0];
 
@@ -111,11 +111,11 @@ export default class Utils {
         }
     }
 
-    static createMetaObject(meta){
+    static createMetaObject(fields){
         let item = {};
 
-        _.each(meta.fields, (f)=>{
-            item[ f.json ? f.name : _.snakeCase(f.name)] = this.defaultFieldValue(f);
+        _.each(fields, (f)=>{
+            item[ f.json ? f.name : _.snakeCase(f.name) ] = this.defaultFieldValue(f);
         });
 
         return item;
@@ -186,6 +186,10 @@ export default class Utils {
         });
 
         return sibling;
+    }
+
+    static getDisplayValue(fieldName, item){
+        return item && (fieldName.indexOf('.') >= 0 ) ? _.get(item, fieldName, '') : item[fieldName];
     }
 
 }

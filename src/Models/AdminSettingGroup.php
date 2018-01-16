@@ -2,7 +2,9 @@
 
 namespace Vshapovalov\Crud\Models;
 
-class AdminSettingGroup extends CrudModel
+use Illuminate\Database\Eloquent\Model;
+
+class AdminSettingGroup extends Model
 {
 
 

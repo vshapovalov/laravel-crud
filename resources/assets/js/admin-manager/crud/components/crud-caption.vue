@@ -7,14 +7,14 @@
         <span v-else-if="fieldType === fieldTypes.COLORBOX" :style="{'background-color': fieldValue}" class="tag">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.CHECKBOX ">{{ (fieldValue && (fieldValue !==0) && (fieldValue !== "0")) ? "Да" : "Нет" }}</span>
         <span v-else-if="fieldType === fieldTypes.DROPDOWN">{{ fieldValue }}</span>
-        <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.BELONGS_TO">
-            {{ item[!field.json ? toSnakeCase(field.relation.name) : field.relation.name] ? item[!field.json ? toSnakeCase(field.relation.name) : field.relation.name][getCrud(field.relation.crud)['display']] : '' }}
+        <span v-else-if="fieldType === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO || field.relation.type === relationTypes.HAS_ONE)">
+            {{ !field.json ? ( item[field.name] ? getDisplayValue(getCrud(field.relation.crud.code)['display'], item[field.name]) : '') : item[field.name] }}
         </span>
         <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.HAS_MANY">
-            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.relation.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud)['display']] }}</span>
+            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud.code)['display']] }}</span>
         </span>
         <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.BELONGS_TO_MANY">
-            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.relation.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud)['display']] }}</span>
+            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud.code)['display']] }}</span>
         </span>
         <span v-else-if="fieldType === fieldTypes.IMAGE">
             <span v-if="field.additional && (field.additional && (field.additional.mode === 'single'))">
@@ -40,6 +40,7 @@
 
     import FieldTypes from './../utils/field-types';
     import RelationTypes from './../utils/relation-types';
+    import Utils from './../utils';
 
     export default {
         name: 'crud-caption',
@@ -57,17 +58,17 @@
                 let result = '';
 
                 if (this.field.type === FieldTypes.DYNAMIC){
-                    if (this.field.dynamic && this.field.dynamic.type === 'relation') {
+                    if (this.field.additional && this.field.additional.type === 'related') {
 
-                        let [fieldName, relationField] = this.field.dynamic.from.split('.');
+                        let [fieldName, relationField] = this.field.additional.from.split('.');
 
                         result = this.item[_.snakeCase(fieldName)][relationField];
 
                     } else {
 
-                        if (this.field.dynamic && this.field.dynamic.type === 'field') {
+                        if (this.field.additional && this.field.additional.type === 'field') {
 
-                            result = this.item[this.field.dynamic.from];
+                            result = this.item[this.field.additional.from];
                         }
                     }
 
@@ -91,25 +92,6 @@
 
                     value = this.item.pivot[this.field.name];
                 }
-
-//                if (this.field.json) {
-//
-//                    let jPath = this.field.name.split('->');
-//
-//                    let tmpValue = this.field.isPivot ? this.item.pivot[jPath[0]] : this.item[jPath[0]];
-//
-//                    jPath.splice(0,1);
-//
-//                    try{
-//                        _.each(jPath,(p)=>{
-//                            tmpValue = tmpValue[p];
-//                        });
-//                    } catch(e){
-//                        console.log(e);
-//                    }
-//
-//                    value = tmpValue;
-//                }
 
                 if (this.field.type === FieldTypes.DROPDOWN && this.field.additional) {
 
@@ -142,6 +124,9 @@
             }
         },
         methods: {
+            getDisplayValue(fieldName, item){
+                return Utils.getDisplayValue(fieldName, item);
+            },
 
             toSnakeCase(val){
                 return _.snakeCase(val);

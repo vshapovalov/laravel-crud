@@ -11,11 +11,11 @@
         <div class="dropdown-menu" role="menu">
             <div class="dropdown-content">
                 <table class="table" style="margin-bottom: 0;">
-                    <thead>
-                        <tr>
-                            <th>Значение</th>
-                        </tr>
-                    </thead>
+                    <!--<thead>-->
+                        <!--<tr>-->
+                            <!--<th>Значение</th>-->
+                        <!--</tr>-->
+                    <!--</thead>-->
                     <tbody>
                         <tr v-for="row in rows" @click.prevent.stop="selectItem(row)" :class="{ 'is-selected' : row.isSelected}">
                             <td>{{ row.value }}</td>
@@ -47,15 +47,13 @@
         },
         watch:{
             value(val, oldVal){
-
-                this.parseValue();
-
+                if (oldVal === undefined) this.parseValue();
             }
         },
         computed: {
             isSingleMode(){
 
-                return !this.field.additional || !this.field.additional.mode || (this.field.additional.mode === 'single');
+                return !(this.field.additional && this.field.additional.mode && (this.field.additional.mode === 'multi'));
             },
             selectedValue(){
 
@@ -70,10 +68,7 @@
         },
         methods: {
             toggleRowSelected(row){
-
-                if (!this.isSingleMode)
-
-                    this.$set(row, 'isSelected', !row.isSelected)
+                this.$set(row, 'isSelected', !row.isSelected)
             },
             emitChanges(){
 
@@ -106,7 +101,7 @@
             parseValue(){
                 if (this.field.additional && this.field.additional.values){
 
-                    this.rows = this.field.additional.values;
+                    if (!this.rows.length) this.rows = _.cloneDeep(this.field.additional.values);
 
                     if (this.value){
 
@@ -117,8 +112,10 @@
 
                             let valArr;
 
+
+
                             try {
-                                valArr = JSON.parse(this.value);
+                                valArr = _.isString(this.value) ?  JSON.parse(this.value) : this.value;
                             } catch(e){
                             }
 
@@ -137,8 +134,11 @@
             },
         },
 
+        beforeMount(){
 
+        },
         mounted() {
+
             this.parseValue();
 
         },

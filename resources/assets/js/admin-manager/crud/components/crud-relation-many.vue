@@ -8,8 +8,7 @@
             </div>
         </div>
         <crud-table :items="items" :type="crudTypes.PICK_MANY" :crud="crud" @delete="deleteItem" @edit="editItem"
-                    :row-actions="tableActions" :with-pivot="field.relation.pivot"
-                    :pivot-fields="field.relation.pivot ? field.relation.pivot.fields : []"></crud-table>
+                    :row-actions="tableActions" :pivot-fields="field.relation.pivot"></crud-table>
 
         <div v-if="modalForm.active" class="modal is-active">
             <div class="modal-background"></div>
@@ -90,7 +89,6 @@
             event: "change"
         },
         props: {
-            crudCode: { type: String },
             items: { type: Array },
             field: {
                 type: Object
@@ -117,15 +115,11 @@
                 return CrudTypes;
             },
             pivotFields(){
-                return _.filter(this.field.relation.pivot.fields, (f)=> f.visibility && _.some(f.visibility,(v)=>v==='edit'));
+                return _.filter(this.field.relation.pivot, (f)=> f.visibility && _.some(f.visibility,(v)=>v==='edit'));
             },
             tableActions(){
 
                 let actions = ['delete', 'edit'];
-
-//                if (this.field.relation.pivot){
-//                    actions.splice(actions.length, 0, 'edit');
-//                }
 
                 return actions;
             },
@@ -179,13 +173,11 @@
             /***************************************** end modal edit form ***************************/
 
             addItem(){
-                Bus.$emit('editpanel:mount', this.crud, null ,this.crud.meta.fields, this.saveItem);
+                Bus.$emit('editpanel:mount', this.crud, null, this.saveItem);
             },
 
             saveItem(item){
                this.mergedItems([item]);
-
-
             },
 
             delAllItems(){
@@ -214,12 +206,12 @@
                     return;
                 }
 
-                if (this.field.relation.pivot){
+                if (this.field.relation.pivot.length){
                     this.pivotRow = item.pivot;
                     this.showModalForm();
                 } else {
 
-                    Bus.$emit('editpanel:mount', this.crud, item[this.crud.id] ,this.crud.meta.fields, this.saveItem);
+                    Bus.$emit('editpanel:mount', this.crud, item[this.crud.id], this.saveItem);
 
                 }
 
@@ -266,7 +258,7 @@
                             i.isSelected = false;
                         }
 
-                        if (this.field.relation.pivot){
+                        if (this.field.relation.pivot.length){
 
                             let sameItem = _.find(this.items, (ti)=>ti[this.crud.id] === i[this.crud.id]);
 
@@ -280,17 +272,17 @@
 
                     });
 
-                    pickedItems.splice(pickedItems.length, 0, ...this.items);
+                    if (this.items) pickedItems.splice(pickedItems.length, 0, ...this.items);
 
-                    let items = _.uniqBy(pickedItems, this.crud.id);
+                    pickedItems = _.uniqBy(pickedItems, this.crud.id);
 
-                    this.emitChanges(items);
+                    this.emitChanges(pickedItems);
 
                 }
             }
         },
         beforeMount(){
-            this.crud = AdminManager.getCrud(this.crudCode);
+            this.crud = AdminManager.getCrud(this.field.relation.crud.code);
         },
         mounted() {
 

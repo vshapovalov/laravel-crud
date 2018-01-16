@@ -2,7 +2,9 @@
 
 namespace Vshapovalov\Crud\Models;
 
-class AdminSetting extends CrudModel
+use Illuminate\Database\Eloquent\Model;
+
+class AdminSetting extends Model
 {
 
 	protected $table = 'admin_settings';

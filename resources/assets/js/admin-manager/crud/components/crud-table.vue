@@ -44,8 +44,7 @@
                 type: Array,
                 'default': ()=>['edit', 'delete']
             },
-            withPivot: {},
-            pivotFields: {},
+            pivotFields: { default : ()=>[]},
         },
         data: function () {
             return {
@@ -56,10 +55,10 @@
             crudBrowsableFields(){
 
                 let fields = _.filter(
-                    this.crud.meta.fields, (f)=> (_.findIndex(f.visibility, (v) => v === VisibilityTypes.BROWSE ) >= 0)
+                    this.crud.fields, (f)=> (_.findIndex(f.visibility, (v) => v === VisibilityTypes.BROWSE ) >= 0)
                 );
 
-                if (this.withPivot) {
+                if (this.pivotFields.length) {
                     fields.splice(fields.length, 0, ..._.map(_.filter(this.pivotFields, (pv)=>_.some(pv.visibility,(v)=>v===VisibilityTypes.BROWSE)),(f)=>{
                         f.isPivot = true;
                         return f;

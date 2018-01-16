@@ -127,8 +127,8 @@
 
 				dynamic - field type depends on other crud model field, field has options
 
-					'dynamic'    => [
-						'type' => 'relation', // relation type
+					'additional'    => [
+						'type' => 'related', // relation type
 						'from' => 'crudFieldType.code' // {relation field name}.{relation field attribute}
 									or
 						'type' => 'field', // field type
@@ -199,67 +199,19 @@ return
 						'width' => 250,
 						'height' => 250,
 					]
-				]
+				],
+				[
+					'name' => 'fitted',
+					'fit' => [
+						'width' => 250,
+						'height' => 250,
+						'position' => 'center' //top-left, top, top-right, left, center (default), right, bottom-left, bottom, bottom-right
+					]
+				],
 			]
 		*/
 		],
 
-		/* menu declaration */
-		'menu' => [
-			/* medialibrary menu declaration */
-			[
-				'name' => 'media-library',
-				'caption' => 'Медиа библиотека',
-				'action' => 'medialibrary:mount',
-				'default' => true
-			],
-
-			/* cruds menu declaration */
-			[
-				'name' => 'menuitems',
-				'caption' => 'Редактирование меню',
-				'action' => 'crud:menuitems:mount'
-			],
-			[
-				'name' => 'crudfieldtypes',
-				'caption' => 'Типы полей',
-				'action' => 'crud:crudfieldtypes:mount'
-			],
-			[
-				'name' => 'adminsettinggroups',
-				'caption' => 'Группы настроек',
-				'action' => 'crud:adminsettinggroups:mount'
-			],
-			[
-				'name' => 'adminsettings',
-				'caption' => 'Настройки',
-				'action' => 'crud:adminsettings:mount'
-			],
-//			[
-//				'name' => 'users',
-//				'caption' => 'Список пользователей',
-//				'action' => 'crud:users:mount'
-//			],
-
-
-			/*
-				external components menu declaration
-				example of user component can be found in %package%/resource/assets/js/example-user-component/
-
-				user component can use vue, lodash, axios, jquery, etc, because they are bundled in admin.js,
-				and declared as window obj props
-
-			*/
-
-//          [
-//				'name' => 'testcomponent',
-//				'caption' => 'User component test',
-
-//              // user component must be registered by action, which specified in user component script
-//              // example of user component can be found in %package%/resource/assets/js/example-user-component/
-//				'action' => 'user:testcomponent:mount'
-//			]
-		],
 
 		/* additional script and user components scripts declaration */
 
@@ -267,243 +219,10 @@ return
 //			[
 //				'name' => 'test-component', // just simple name
 //				'path' => '/js/test-components.js' // path to component, must be absolute
+//
+//              user component must be registered by action, which specified in user component script
+//              example of user component can be found in %package%/resource/assets/js/example-user-component/
+//				action field value = user:testcomponent:mount
 //			]
 		],
-
-		/* cruds declaration */
-		'list' =>
-		[
-			/*********************************** USERS *************************************/
-
-//			[
-//				'name'    => 'Пользователи',
-//				'code'    => 'users',
-//				'model'   => 'App\User',
-//				'id'      => 'id',
-//				'display' => 'name',
-//				'visible' => true,
-//				'type'    => 'list',
-//				'meta'    => [
-//					'fields' => [
-//						'name'      => [
-//							'name'       => 'name',
-//							'caption'    => 'Пользователь',
-//							'type'       => 'textbox',
-//							'visibility' => [ 'browse', 'edit', 'add' ],
-//							'tab'        => 'Основные параметры',
-//							'validation'   => 'required',
-//						],
-//						'email'      => [
-//							'name'       => 'email',
-//							'caption'    => 'E-mail',
-//							'type'       => 'textbox',
-//							'visibility' => [ 'browse', 'edit', 'add' ],
-//							'tab'        => 'Основные параметры',
-//							'validation'   => 'required',
-//						],
-//						'password'      => [
-//							'name'       => 'password',
-//							'caption'    => 'Пароль',
-//							'type'       => 'textbox',
-//							'visibility' => [ 'edit', 'add' ],
-//							'tab'        => 'Основные параметры',
-//							'additional' => [
-//								'mode' => 'password'
-//							],
-//						]
-//					]
-//				]
-//			],
-
-
-			/********************************** MENU ITEMS *************************************/
-			[
-				'name'    => 'Меню',
-				'code'    => 'menuitems',
-				'model'   => 'Vshapovalov\Crud\Models\MenuItem',
-				'id'      => 'id',
-				'display' => 'title',
-				'visible' => true,
-				'type'    => 'tree',
-				'tree'    => [
-					'parent' => 'parent_id'
-				],
-				'meta'    => [
-					'fields' => [
-						'title'      => [
-							'name'       => 'title',
-							'caption'    => 'Заголовок',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-							'additional' => [
-								'slugify' => 'url'
-							]
-						],
-						'parent' => [
-							'name'       => 'parent',
-							'caption'    => 'Главное меню',
-							'type'       => 'relation',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'relation'   => [
-								'name' => 'parent',
-								'crud' => 'menuitems',
-								'type' => 'belongsTo'
-							],
-						],
-						'url'      => [
-							'name'       => 'url',
-							'caption'    => 'Ссылка',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-						],
-						'code'      => [
-							'name'       => 'code',
-							'caption'    => 'Код',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-						],
-					]
-				]
-			],
-
-			/************************ CRUD FIELD TYPES ********************/
-			[
-				'name'    => 'CRUD типы полей',
-				'code'    => 'crudfieldtypes',
-				'model'   => 'Vshapovalov\Crud\Models\CrudFieldType',
-				'id'      => 'id',
-				'display' => 'name',
-				'items'   => '',
-				'visible' => true,
-				'type'    => 'list',
-				'meta'    => [
-					'fields' => [
-						'name' => [
-							'name'       => 'name',
-							'caption'    => 'Название',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-						],
-						'code' => [
-							'name'       => 'code',
-							'caption'    => 'Код',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-						]
-					]
-				]
-			],
-
-
-			/************************ ADMIN SETTING GROUPS ********************/
-
-			[
-				'name'    => 'Группы настроек',
-				'code'    => 'adminsettinggroups',
-				'model'   => 'Vshapovalov\Crud\Models\AdminSettingGroup',
-				'id'      => 'id',
-				'display' => 'name',
-				'items'   => '',
-				'visible' => true,
-				'type'    => 'list',
-				'meta'    => [
-					'fields' => [
-						'name' => [
-							'name'       => 'name',
-							'caption'    => 'Название',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-						],
-						'code' => [
-							'name'       => 'code',
-							'caption'    => 'Код',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-						]
-					]
-				]
-			],
-
-			/************************ ADMIN SETTINGS ********************/
-
-			[
-				'name'    => 'Настройки',
-				'code'    => 'adminsettings',
-				'model'   => 'Vshapovalov\Crud\Models\AdminSetting',
-				'id'      => 'id',
-				'display' => 'name',
-				'visible' => true,
-				'type'    => 'list',
-				'meta'    => [
-					'fields' => [
-						'name'              => [
-							'name'       => 'name',
-							'caption'    => 'Название',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-						],
-						'key'               => [
-							'name'       => 'key',
-							'caption'    => 'Ключ',
-							'type'       => 'textbox',
-							'visibility' => [ 'browse', 'edit', 'add' ],
-							'tab'        => 'Основные параметры',
-							'validation'   => 'required|string|max:191',
-						],
-						'adminSettingGroup' => [
-							'name'       => 'adminSettingGroup',
-							'caption'    => 'Группа настроек',
-							'type'       => 'relation',
-							'relation'   => [
-								'name' => 'adminSettingGroup',
-								'crud' => 'adminsettinggroups',
-								'type' => 'belongsTo'
-							],
-							'visibility' => [ 'edit', 'add' ],
-							'tab'        => 'Настройки',
-							'validation'   => 'required',
-						],
-						'crudFieldType'     => [
-							'name'       => 'crudFieldType',
-							'caption'    => 'Тип поля',
-							'type'       => 'relation',
-							'relation'   => [
-								'name' => 'crudFieldType',
-								'crud' => 'crudfieldtypes',
-								'type' => 'belongsTo'
-							],
-							'visibility' => [ 'edit', 'add' ],
-							'tab'        => 'Настройки',
-							'validation'   => 'required',
-						],
-						'value'             => [
-							'name'       => 'value',
-							'caption'    => 'Значение',
-							'type'       => 'dynamic',
-							'dynamic'    => [
-								'type' => 'relation',
-								'from' => 'crudFieldType.code'
-							],
-							'visibility' => [ 'browse', 'edit' ],
-							'tab'        => 'Основные параметры',
-						]
-					]
-				]
-			],
-		]
 	];

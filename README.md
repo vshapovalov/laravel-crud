@@ -54,89 +54,28 @@ Vshapovalov\Crud\CrudServiceProvider::class,
 php artisan crud:install
 ```
 
+### 4. import database/scripts/crud_forms.sql into your db
+
 Check http://app_url/cruds
 
 ## How it works
 
-- inherit your eloquent model from CrudModel or use RelashionshipTrait[, TreeableTrait]
-- declare crud for your model in config/cruds.php and refresh crud admin page
+- declare crud form for your model in admin panel and refresh crud admin page
 
-There is still a lot of work ahead - roles, localization, etc. ;]
+There is still a lot of work ahead - localization, etc. ;]
 
 ### Crud options
 
-```php
-[
-  'name'    => 'Пользователи', // name of crud, displays in admin navbar
-  'code'    => 'users', // crud code and url for api requests
-  'model'   => 'App\User', // crud using model
-  'id'      => 'id', // model's primarykey
-  'display' => 'name', // crud field for crud table and controls
-  'visible' => true, // is crud visible in admin menu
-  'type'    => 'list', // crud type ['list', 'tree'], if you want to use tree type, then use Treeable trait for model
-  'scopes'  => [  // model scopes for getting crud rows
-        'byUser'    => [
-          'name'   => 'orderByName', // model scope function name, example, orderByName for scopeOrderByName
-          'params' => [ // params for crud model scopes when crud in pick mode on edit panel, resolved from root item, injected in scope
-            'id'
-          ]
-        ],
-        'onlyWithImages' => [ // example without params
-          'name' => 'onlyWithImages'
-        ]
-      ],
-]
-```
+All crud forms can be edited from admin panel
 
-### Crud field options
+Systemp options->Crud forms
 
-```php
-[
-  'name'       => 'password', // model's field or relation name
-  'json'       => true, // indicates that field uses value of json field, in this case name must be like 'meta->bio->gender' 
-  'caption'    => 'Пароль', // field caption for crud table and control
-  'type'       => 'textbox', // crud field type, control type
-  'visibility' => [ 'browse', 'edit', 'add' ], // visibility and state of control in crud table and edit panel
-  'tab'        => 'Основные параметры', // tab name for control in edit panel
-  'validation' => 'required|string:255', // laravel validation rule, except relation field type
-  'description'=> 'введите уникальный пароль', // field description for control label
-  'readonly'   => true, // is field readonly on editpanel in [edit, add] states
-  'additional' => [], // additional control options
-  'relation' => [], // options for fields of relation type
-  'dynamic'    => [], // options for fields of dynamic type
-]
-```
-
-also, if you using json field type, then cast model json prop to array
-
-```php
-
-class User extends Authenticatable
-{
-    use RelationshipsTrait;
-    
-    protected $casts = [
-        // name of json db field
-    	'meta' => 'array'
-    ];
-    
-    // use mutators for for pretty field access 
-    function getSexAttribute(){
-        return $this['meta->bio->gender'];
-    }
-    
-    function setSexAttribute($val){
-        $this['meta->bio->gender'] = $val;
-    }
-}
-```
-
-### Crud field types
+### Crud field addtional options(json type)
 
 **textbox** - simple textbox
-- has additional options: additional: ['slugify' => 'depending field name']
-- has additional options: additional: ['mode' => 'password']
-- has additional options: additional: ['mode' => 'masked', 'mask' => '+7(777)000-00-00']
+- has additional options: additional: {"slugify":"depending_field_name"}
+- has additional options: additional: {"mode":"password"}
+- has additional options: additional: {"mode":"masked", "mask":"+7(777)000-00-00"}
 
 **colorbox** - color picker based on html5 input[type="color"]
 
@@ -144,100 +83,51 @@ class User extends Authenticatable
 
 **textarea** - simple textarea
 
-**datepicker** - date picker, has additional options ['mode' => ['date', 'datetime']]
+**datepicker** - date picker, has additional options {"mode":"date|datetime"}
 
 **dropdown** - simple dropdown, has additional options
 
-```php
-additional => [
-    'mode' => 'single', // single, multi
-    'values' => [
-        [ 'key' => 0, 'value' => 'DRAFT'],
-        [ 'key' => 1, 'value' => 'PUBLISHED']
-    ]
-]
-```
+additional:
+{
+    "mode:":"single|multi", 
+    "values": [ 
+        {"key":0, "value":"DRAFT"}, 
+        {"key":1, "value":"PUBLISHED"} 
+    ] 
+}
 
 **richedit** - richeditor by tinymce
 
 **image** - image picker, based on crud media library, has additional options 
-```php
-[
-    'mode' => 'multi', // multi or single, 'multi' is default
-    'resize' => [
-            'width' => 1000,
-            'height' => null,
-            'quality' => 90
-        ],
-    'thumbnails' => [
-        [
-            'name' => 'medium',
-            'scale' => 50
-        ],
-        [
-            'name' => 'small',
-            'scale' => 25
-        ],
-        [
-            'name' => 'cropped',
-            'crop' => [
-                'width' => 250,
-                'height' => 250,
-            ]
-        ]
+
+{
+    "mode":"multi|single",
+    "resize": { "width":1000, "height": null, "quality": 90},
+    "thumbnails": [
+        { "name":"medium", "scale":50},
+        { "name":"small", "scale":25},
+        { "name":"cropped", "crop": {"width": 250, "height": 250 } }
     ] 
-]
-```
+}
+
 
 **dynamic** - field type depends on other crud model field, field has options
 
-```php
-'dynamic'    => [
-  'type' => 'relation', // relation type
-  'from' => 'crudFieldType.code' // {relation field name}.{relation field attribute}
-//        or
-  'type' => 'field', // field type
-  'from' => 'fieldtype' // field name
-]
-```
+{ "type":"related", "from": "crudFieldType.code"} or { "type":"field", "from": "fieldtype"} 
 
 **relation** - relation field type, field has options
 
-```php
-'relation'   => [
-    'name'  => 'colors', // relation name
-    'crud'  => 'colors', // crud used for field control, must be declared in crud config
-    'type'  => 'belongsToMany', // relation type, one of ['belongsTo', 'belongsToMany', 'hasOne', 'hasMany']
-    'pivot' => [ // pivot fields options if using pivot table, relation should have method ->withPivot([...])
-      'fields' => [
-        'qty'         => [
-          'name'       => 'qty',      // pivot field name
-          'caption'    => 'Изображения', // pivot field caption for crud table
-          'type'       => 'image',    // control type for pivot field,
-                        // can be one of types:
-                        //   textbox, checkbox, textarea, image, richedit ... not relations, may be later
+addional for pivot fields:
 
-          'additional' => [           // additional field options, example for image field type
-            'mode' => 'multi'
-          ]
-        ],
-        'publishDate' => [
-          'name'       => 'publishDate',
-          'caption'    => 'Дата',
-          'type'       => 'datepicker',
-          'additional' => [
-            'mode' => 'date'
-          ]
-        ],
-      ]
-    ]
-  ]
-```
+{ "buttons": [ "add", "edit", "pick", "delete_all" ]}
+
 
 ### Media library
 
 
 Media library can resize, create thumbnails for uploaded images by default settings, also crud image field have additional options for resize image
+
+config/cruds.php
 ```php
 'media_default_settings' => [
     /* for example
@@ -267,33 +157,10 @@ Media library can resize, create thumbnails for uploaded images by default setti
 ],
 ```
 
+
 ### Menu options
 
-Menu section contains menu items:
-
-```php
-[
-    // unique name of menu item
-    'name' => 'media-library',
-
-    // caption of menu item
-    'caption' => 'Медиа библиотека',
-
-    // bus event name, 'medialibrary:mount' is default for media library,
-    // 'crud:%crudcode%:mount' is default for cruds
-    'action' => 'medialibrary:mount'
-
-    // this component will be mount after admin panel loaded
-    'default' => true,
-
-    // items can be grouped
-    // array of nested items, contains same item
-    // nested items can contains items too
-    'items' => [
-
-    ]
-],
-```
+Admin menu list can be edited from admin panel
 
 Also you can use own Vue components(some widgets), just add them in components and menu sections.
 User component can use vue, lodash, axios, jquery, because they are bundled in admin.js and declared as window obj props
@@ -307,13 +174,13 @@ User component can use vue, lodash, axios, jquery, because they are bundled in a
 ],
 ```
 
-```php
-[
-    'name' => 'user_component',
-    'caption' => 'User component test',
+
+Admin menu crud form 
+    name - user_component
+    caption - User component test
 
     // user component must be registered by action, which specified in user component script
     // example of user component can be found in %package%/resource/assets/js/example-user-component/
-    'action' => 'user:testcomponent:mount'
-] 
-```
+    
+    action - user:testcomponent:mount
+    

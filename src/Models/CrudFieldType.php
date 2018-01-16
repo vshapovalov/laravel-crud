@@ -2,7 +2,9 @@
 
 namespace Vshapovalov\Crud\Models;
 
-class CrudFieldType extends CrudModel
+use Illuminate\Database\Eloquent\Model;
+
+class CrudFieldType extends Model
 {
 
 	public $timestamps = false;
