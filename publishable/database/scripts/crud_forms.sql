@@ -12,16 +12,6 @@ MySQL - 5.7.18-log : Database - crud
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-/*Data for the table `crud_field_types` */
-
-insert  into `crud_field_types`(`id`,`code`,`name`) values 
-(1,'textbox','textbox'),
-(2,'checkbox','checkbox'),
-(3,'colorbox','colorbox'),
-(4,'textarea','textarea'),
-(5,'datepicker','datepicker'),
-(6,'richedit','richedit'),
-(7,'image','image');
 
 /*Data for the table `crud_fields` */
 
