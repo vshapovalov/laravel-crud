@@ -40,9 +40,6 @@
             },
 
             onSelect(item){
-                console.log('tree-item');
-                console.log(item);
-
                 if (this.isPickMode){
 
                     if (this.type === CrudTypes.PICK){

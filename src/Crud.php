@@ -416,14 +416,14 @@ class Crud {
 
 			if ($field['type'] == 'dynamic'){
 
-				if ($field['dynamic']['type'] == 'field'){
+				if ($field['additional']['type'] == 'field'){
 
-					$field['type'] = $inputValues[$field['dynamic']['from']];
+					$field['type'] = $inputValues[$field['additional']['from']];
 				}
 
-				if ($field['dynamic']['type'] == 'relation'){
+				if ($field['additional']['type'] == 'relation'){
 
-					[$dynamicRelation, $dynamicField] = explode('.', $field['dynamic']['from']);
+					[$dynamicRelation, $dynamicField] = explode('.', $field['additional']['from']);
 
 					$field['type'] = $inputValues[snake_case($dynamicRelation)][$dynamicField];
 
@@ -677,8 +677,10 @@ class Crud {
 				$item->level = $item->parent->level + 1;
 				$item->path = $item->parent->path . str_pad($item->id, 4, '0', STR_PAD_LEFT) . ';';;
 
-				if(!isset($id) || ($item->parent->id <> $inputValues[ $crud['tree']['parent']])){
-					$item->order = call_user_func($crud['model']."::where", $crud['tree']['parent'], '=', $item->parent->id)->
+//				if(!isset($id) || ($item->parent->id <> $inputValues[ $crud['tree']['parent']])){
+				if(!isset($id) || ($item->parent->id <> $inputValues[ 'parent_id' ])){
+					//$item->order = call_user_func($crud['model']."::where", $crud['tree']['parent'], '=', $item->parent->id)->
+					$item->order = call_user_func($crud['model']."::where", 'parent_id', '=', $item->parent->id)->
 						where($crud['id'],'<>', $item->id)->max('order') + 1;
 				} else {
 					$item->order = $inputValues['order'];
@@ -687,7 +689,9 @@ class Crud {
 			} else {
 				$item->level =  1;
 
-				$item->order = call_user_func($crud['model']."::whereNull", $crud['tree']['parent'])->
+				//$item->order = call_user_func($crud['model']."::whereNull", $crud['tree']['parent'])->
+
+				$item->order = call_user_func($crud['model']."::whereNull", 'parent_id')->
 					where($crud['id'],'<>', $item->id)->max('order') + 1;
 
 				$item->path = str_pad($item->id, 4, '0', STR_PAD_LEFT) . ';';;

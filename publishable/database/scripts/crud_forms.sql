@@ -140,8 +140,8 @@ insert  into `user_role`(`user_id`,`role_id`,`meta`,`created_at`,`updated_at`) v
 
 /*Data for the table `users` */
 
-insert  into `users`(`id`,`name`,`email`,`password`,`remember_token`,`created_at`,`updated_at`) values 
-(1,'admin','admin@admin.com','$2y$10$yXXgm2NZ5pEIFRl6U5C4sOiamvuMv6pC/5R/Cadr3Rr.UoYtxM.Q2','BQgTGZrZCrPzRJyIwFIDmaXcJLNy1Dxld2zJe2PoLMbuT8j2n7PMsBasKeRl','2017-11-05 07:24:34','2018-01-16 07:29:07');
+insert  into `users`(`name`,`email`,`password`,`remember_token`,`created_at`,`updated_at`) values
+('admin','admin@admin.com','$2y$10$yXXgm2NZ5pEIFRl6U5C4sOiamvuMv6pC/5R/Cadr3Rr.UoYtxM.Q2','BQgTGZrZCrPzRJyIwFIDmaXcJLNy1Dxld2zJe2PoLMbuT8j2n7PMsBasKeRl','2017-11-05 07:24:34','2018-01-16 07:29:07');
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
