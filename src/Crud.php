@@ -421,7 +421,7 @@ class Crud {
 					$field['type'] = $inputValues[$field['additional']['from']];
 				}
 
-				if ($field['additional']['type'] == 'relation'){
+				if ($field['additional']['type'] == 'related'){
 
 					[$dynamicRelation, $dynamicField] = explode('.', $field['additional']['from']);
 
