@@ -45,7 +45,7 @@
 <style>
     .nested-items{
         overflow: hidden;
-        max-height: 300px;
+        /*max-height: 300px;*/
     }
 
     .slide-enter, .slide-leave-to{

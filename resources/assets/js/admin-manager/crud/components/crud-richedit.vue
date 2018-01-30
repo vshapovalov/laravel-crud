@@ -17,7 +17,17 @@
         },
         props: ["value", "field"],
         data: function () {
-            return {}
+            return {
+                inited: false
+            }
+        },
+        watch: {
+          value(val, oldVal){
+
+              if (oldVal == undefined){
+                  tinymce.activeEditor.setContent(val);
+              }
+          }
         },
         computed: {},
         methods: {

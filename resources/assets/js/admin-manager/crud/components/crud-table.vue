@@ -1,9 +1,11 @@
 <template>
-    <table class="table">
+    <table class="table crud-table">
         <thead>
         <tr>
             <th data-role="button" v-for="field in crudBrowsableFields" @click.stop="sort(field)">{{ field.caption }}</th>
-            <th>Действия</th>
+            <!--<th> Действия</th>-->
+            <th v-if="rowActions.indexOf('edit') >= 0" style="width: 30px; text-align:center;"><i class="fa fa-pencil"></i></th>
+            <th v-if="rowActions.indexOf('delete') >= 0" style="width: 30px; text-align:center;"><i class="fa fa-trash"></i></th>
         </tr>
         </thead>
         <tbody>
@@ -14,10 +16,12 @@
             <td v-for="field in crudBrowsableFields">
                 <crud-caption :item="item" :field="field" :is-pivot="field.isPivot"></crud-caption>
             </td>
-            <td>
-                <a v-if="rowActions.indexOf('edit') >= 0" class="button is-warning is-outlined"
-                   @click.prevent.stop="editItem(item)"><i class="fa fa-pencil"></i></a>
-                <a v-if="rowActions.indexOf('delete') >= 0" class="button is-danger is-outlined"
+            <td v-if="rowActions.indexOf('edit') >= 0">
+                <a  class="button is-warning is-outlined"
+                    @click.prevent.stop="editItem(item)"><i class="fa fa-pencil"></i></a>
+            </td>
+            <td v-if="rowActions.indexOf('delete') >= 0">
+                <a  class="button is-danger is-outlined"
                    @click.prevent.stop="deleteItem(item)"><i class="fa fa-trash"></i></a>
             </td>
         </tr>

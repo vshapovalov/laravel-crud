@@ -1,14 +1,21 @@
 <template>
     <div class="">
-        <div class="admin-header">
-            <div class="logo">
-                <a href="javascript:;">Админ.панель</a>
-            </div>
-            <div class="header-content"></div>
-        </div>
         <div class="admin-container">
             <div class="sidebar">
-                <menu-item key="menuItem.name" v-for="menuItem in menu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
+                <div class="admin-header">
+                    <div class="logo">
+                        <a href="javascript:;">Админ.панель</a>
+                    </div>
+                    <div class="header-content">
+                        <form :action="logoutUrl" method="post">
+                            <input type="hidden" :value="xsrfToken" name="_token">
+                            <input class="button is-primary" type="submit" value="Выход">
+                        </form>
+                    </div>
+                </div>
+                <div class="menu-container">
+                    <menu-item key="menuItem.name" v-for="menuItem in menu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
+                </div>
             </div>
             <div id="workspace" class="content"></div>
         </div>
@@ -40,6 +47,14 @@
         },
         components:{
             'menu-item': MenuItem
+        },
+        computed:{
+          logoutUrl(){
+              return baseUrl + '/logout';
+          },
+          xsrfToken(){
+              return CSRF_TOKEN;
+          }
         },
         methods:{
             closeActiveInstance(){

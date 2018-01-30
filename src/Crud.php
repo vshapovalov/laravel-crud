@@ -394,7 +394,7 @@ class Crud {
 	function saveCrudItem($crud, $inputValues){
 
 		if (is_string($crud))
-			$crud = $this->cruds[$crud];
+			$crud = $this->getCrudByCode($crud);
 
 		if (isset($inputValues[$crud['id']])) {
 			$id = $inputValues[$crud['id']];

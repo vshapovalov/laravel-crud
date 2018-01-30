@@ -266,7 +266,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'description' => null,
 				    'tab' => 'Основные параметры',
 				    'validation' => 'required',
-				    'additional' => '{ "mode":"password"}',
+				    'additional' => null,
 				    'crud_relation_id' => null,
 				    'order' => 2,
 				    'columns' => 6

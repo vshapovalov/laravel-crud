@@ -1,5 +1,5 @@
 <template>
-    <span>
+    <p class="caption-wrapper">
         <span v-if="fieldType === fieldTypes.TEXTBOX">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.TEXTAREA">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.DATEPICKER">{{ fieldValue }}</span>
@@ -17,18 +17,18 @@
             <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud.code)['display']] }}</span>
         </span>
         <span v-else-if="fieldType === fieldTypes.IMAGE">
-            <span v-if="field.additional && (field.additional && (field.additional.mode === 'single'))">
+            <span v-if="!field.additional || (field.additional && field.additional.mode === 'single')">
                 <span class="image is-64x64">
-                    <img :src="fieldValue" alt="">
+                    <img :src="baseUrl + '/' + fieldValue" alt="">
                 </span>
             </span>
-            <span v-if="!field.additional || (field.additional.mode === 'multi')">
+            <span v-if="field.additional && (field.additional.mode === 'multi')">
                 <span v-for="image in getImages(fieldValue)" class="image is-48x48 is-inline-block">
                     <img :src="image" alt="">
                 </span>
             </span>
         </span>
-    </span>
+    </p>
 </template>
 
 <script>
@@ -54,6 +54,9 @@
             }
         },
         computed: {
+            baseUrl(){
+                return baseUrl;
+            },
             fieldType(){
                 let result = '';
 

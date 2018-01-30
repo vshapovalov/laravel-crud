@@ -1,5 +1,5 @@
 <template>
-    <div v-if="active === true" :class="{modal: isPickMode, 'is-active': isPickMode}">
+    <div v-if="active === true" :class="{modal: isPickMode, 'is-active': isPickMode}" class="crud-editor">
         <div :class="{'modal-background': isPickMode}"></div>
         <div :class="{'modal-content' : isPickMode}" >
             <!--style="width: 100%; height: 100%;background-color: #fff; margin: 20px; padding: 20px; border-radius: 5px;"-->
@@ -11,13 +11,13 @@
                     <div class="panel-block">
                         <div>
                             <a href="#" class="button is-primary is-outlined" @click.prevent="getList">Обновить</a>
-                            <a href="#" class="button is-success" @click="addItem">Добавить</a>
+                            <a href="#" class="button is-success" @click.prevent="addItem">Добавить</a>
 
-                            <a v-if="isPickMode" href="#" class="button is-primary" @click="pickRows">Выбрать</a>
-                            <a v-if="isPickMode" href="#" class="button is-danger is-outlined" @click="pickCancel">Отмена</a>
+                            <a v-if="isPickMode" href="#" class="button is-primary" @click.prevent="pickRows">Выбрать</a>
+                            <a v-if="isPickMode" href="#" class="button is-danger is-outlined" @click.prevent="pickCancel">Отмена</a>
                         </div>
                     </div>
-                    <div class="panel-block" :class="{'is-blured': !isReady}">
+                    <div class="panel-block flex" :class="{'is-blured': !isReady}" >
                         <crud-table v-if="crud.type === 'list'" class="is-fullwidth" :items="items"
                                     :crud="crud" :type="editorType" @edit="editItem" @delete="deleteItem"
                                     @select="selectItems" @sort="onSortItems"></crud-table>

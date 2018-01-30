@@ -33,7 +33,7 @@ class CreateCrudScopesTable extends Migration
      */
     public function down()
     {
-	    Schema::create('crud_scopes', function (Blueprint $table) {
+	    Schema::table('crud_scopes', function (Blueprint $table) {
 	        $table->dropForeign('crud_scopes_crud_form_id_foreign');
 	    });
 
