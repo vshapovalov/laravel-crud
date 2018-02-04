@@ -2,8 +2,8 @@
 
 namespace Vshapovalov\Crud\Http\Controllers;
 
+use Illuminate\Http\File;
 use Illuminate\Routing\Controller as BaseController;
-use Vshapovalov\Crud\Models\MediaItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -23,15 +23,10 @@ class MediaController extends BaseController
 
 	function putMedia(request $request){
 
-    	if ($request->input('root_id') == 'root'){
-		    $parentFolder = MediaItem::whereNull('parent_id')->first();
-	    } else {
-		    $parentFolder = MediaItem::whereId($request->input('root_id'))->first();
-	    }
+	    $parentFolder = $request->input('path', 'uploads');
 
 	    $files = [];
 
-//		debug((array)$request->input('media_settings'));
 		$media_settings = json_decode($request->input('media_settings','{}'), true);
 
     	if (count($media_settings))
@@ -39,27 +34,15 @@ class MediaController extends BaseController
 
 		foreach ($request->allFiles() as $file){
 
-
-
 			$fileName = $file->getClientOriginalName();
 
 			$files[] = $fileName;
 
-		    $item = MediaItem::create([
-			    'title' => $fileName,
-			    'path' => '',
-			    'type' => 'item',
-			    'parent_id' => $parentFolder->id
-		    ]);
+			$fullFileName = $fileName;
 
-			$item->path = $parentFolder->path . str_pad($item->id, 4, '0', STR_PAD_LEFT);
-			$item->save();
+			$ext = pathinfo($fullFileName, PATHINFO_EXTENSION);
 
-			$fullFileName = $item->id.'-'.$fileName;
 
-    		Storage::disk('public')->putFileAs('uploads', $file, $fullFileName);
-
-			$ext = pathinfo(storage_path().'/app/public/uploads/' . $fullFileName, PATHINFO_EXTENSION);
 
     		if (in_array($ext, $this->fileTypes)){
 
@@ -71,25 +54,26 @@ class MediaController extends BaseController
 
 				    $quality = null;
 
-
-
 			    	if (isset($this->settings['resize'])){
 
-			    		$image->resize(
-					    	$this->settings['resize']['width'],
-					        $this->settings['resize']['height'],
-					        function($constraint){
-						        $constraint->aspectRatio();
-						        $constraint->upsize();
-					        }
-				        );
 
 					    $quality = isset($this->settings['resize']['quality']) ? $this->settings['resize']['quality'] : $quality;
-					    $image->backup();
 
-					    $image->save(
-					    	storage_path().'/app/public/uploads/' . $fullFileName, $quality);
+			    		if (isset($this->settings['resize']['width']) && $this->settings['resize']['height']){
+						    $image->resize(
+							    $this->settings['resize']['width'],
+							    $this->settings['resize']['height'],
+							    function($constraint){
+								    $constraint->aspectRatio();
+								    $constraint->upsize();
+							    }
+						    )->encode($ext, $quality);
+					    }
+
+					    $image->backup();
 				    }
+
+				    Storage::disk('public')->put($parentFolder . '/' . $fullFileName, $image->stream());
 
 				    if (isset($this->settings['thumbnails'])){
 			    		foreach ($this->settings['thumbnails'] as $thumb){
@@ -133,14 +117,16 @@ class MediaController extends BaseController
 
 						    }
 
-						    $image->save(
-							    storage_path().'/app/public/uploads/' . $thumbFilename,
-							    $quality);
+						    Storage::disk('public')->put($parentFolder . '/' . $thumbFilename, $image->stream());
+
 					    }
 				    }
 
 				    $image->destroy();
 			    }
+		    } else {
+
+			    Storage::disk('public')->putFileAs($parentFolder, $file, $fullFileName);
 		    }
 	    }
 
@@ -149,22 +135,37 @@ class MediaController extends BaseController
 
     function getItems(Request $request){
 
-	    $items = MediaItem::orderBy('type');
+	    $path = 'uploads';
 
-	    $rootFolder = $request->input('root', 'root');
-	    $path = $request->input('path', false);
+	    if (($parentDir = $request->input('path', false)) &&
 
-	    if ($path && count($path)) {
+	        Storage::disk('public')->exists($parentDir)){
 
+		    $path = $parentDir;
+
+	    }
+
+	    if ($path) {
 		    Session::put('media.path', $path);
 	    }
 
-    	if ($rootFolder == 'root') {
-		    return $items->whereNull('parent_id')->first()->children()->orderBy('type')->get();
-	    } else {
-		    return $items->whereParentId($rootFolder)->get();
-	    }
+	    return array_merge(array_map(function($f){
 
+			    $pi = pathinfo($f);
+			    $pi['type'] = 'folder';
+
+			    return $pi;
+
+		    }, Storage::disk('public')->directories($path)),
+
+	           array_map(function($f){
+
+		           $pi = pathinfo($f);
+		           $pi['type'] = 'file';
+
+		           return $pi;
+
+	           }, Storage::disk('public')->files($path)));
     }
 
 	function renameFolder(Request $request){
@@ -175,7 +176,12 @@ class MediaController extends BaseController
 
 		$params = $request->only(['item', 'title']);
 
-		MediaItem::whereId($params['item']['id'])->update(['title' => $params['title']]);
+		if (!Storage::disk('public')->exists($params['item']['dirname'] . '/' . $params['title'])){
+			Storage::disk('public')->move(
+				$params['item']['dirname'] . '/' . $params['item']['basename'],
+				$params['item']['dirname'] . '/' . $params['title']
+			);
+		}
 
 		return $response;
 
@@ -189,21 +195,9 @@ class MediaController extends BaseController
 
 		$params = $request->only(['root', 'title']);
 
-		if ($params['root']['id'] == 'root'){
-			$parentFolder = MediaItem::whereNull('parent_id')->first();
-		} else {
-			$parentFolder = MediaItem::whereId($params['root']['id'])->first();
+		if (!empty($params['root']) && !Storage::disk('public')->exists($params['root'] . '/' . $params['title'])){
+			Storage::disk('public')->makeDirectory($params['root'] . '/' . $params['title']);
 		}
-
-		$folder = MediaItem::create([
-			'title' => $params['title'],
-			'level' => 0,
-			'path' => '',
-			'parent_id' => $parentFolder->id,
-			'type' => 'folder']);
-
-		$folder->path = $parentFolder->path . str_pad($folder->id, 4, '0', STR_PAD_LEFT) . ';';
-		$folder->save();
 
 		return $response;
 	}
@@ -213,26 +207,13 @@ class MediaController extends BaseController
 			'status' => 'success'
 		];
 
-		$item = $request->input('item', null);
+		if ($item = $request->input('item', false)){
 
-		if($item = MediaItem::whereId($item['id'])->first()){
-
-			if ($item->type == 'item'){
-				MediaItem::whereId($item->id)->delete();
-				Storage::disk('public')->delete('uploads/'.$item->id.'-'.$item->title);
+			if ($item['type'] == 'folder'){
+				Storage::disk('public')->deleteDirectory($item['dirname'] . '/' . $item['basename']);
+			} else {
+				Storage::disk('public')->delete($item['dirname'] . '/' . $item['basename']);
 			}
-
-			if ($item->type == 'folder'){
-
-				$fileItems = MediaItem::where('path','like','%'.str_pad($item->id, 4, '0',STR_PAD_LEFT) . ';'.'%')->whereType('item')->get();
-
-				forEach($fileItems as $fileItem){
-					Storage::disk('public')->delete('uploads/'.$fileItem->id.'-'.$fileItem->title);
-				}
-
-				MediaItem::where('path','like','%'.str_pad($item->id, 4, '0',STR_PAD_LEFT) . ';'.'%')->delete();
-			}
-
 		}
 
 		return $response;

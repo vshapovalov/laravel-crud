@@ -93,7 +93,6 @@ class InstallCommand extends Command
 
 	    $this->seed('CrudFieldTypesTableSeeder');
 	    $this->seed('AdminSettingGroupsTableSeeder');
-	    $this->seed('MediaItemsTableSeeder');
 	    $this->seed('CrudFormsTableSeeder');
 
 	    $this->info('Adding the storage symlink to public folder');

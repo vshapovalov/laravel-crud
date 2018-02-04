@@ -1,2 +1,2 @@
-export default ['.jpg', '.jpeg', '.png', '.bmp', '.gif'];
+export default ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'ico'];
 

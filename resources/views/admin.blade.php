@@ -20,13 +20,11 @@
 
 @section('scripts')
     <script>
-        window.baseUrl = "{{ env('APP_URL') }}";
+        window.baseUrl = "{{ url('/') }}";
         window.crudPrefix = "{{ config('cruds.crud_prefix') }}";
         window.mediaPrefix = "{{ config('cruds.media_prefix') }}";
-        window.mediaPath = {!! json_encode(\Illuminate\Support\Facades\Session::get('media.path', [
-            [ 'title' => 'Библиотека', 'id' => 'root', 'path' => '/storage/uploads/', 'type' => 'folder']
-        ]))  !!};
-        window.uploadPath = "{{ '/storage/uploads' }}";
+        window.mediaPath = "{{ session()->get('media.path', 'uploads') }}";
+        window.uploadPath = "{{ '/storage' }}";
     </script>
 
     <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js') }}"></script>

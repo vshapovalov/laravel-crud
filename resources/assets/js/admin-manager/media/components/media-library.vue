@@ -1,5 +1,5 @@
 <template>
-    <div v-if="active === true" :class="{modal: isPickMode, 'is-active': isPickMode}" style="z-index: 100000;">
+    <div v-if="active === true" class="media-library" :class="{modal: isPickMode, 'is-active': isPickMode}" style="z-index: 100000;">
         <div :class="{'modal-background': isPickMode}"></div>
         <div :class="{'modal-content' : isPickMode}" >
 
@@ -14,12 +14,12 @@
                                     <div id="uploadPreview" style="display: none">
 
                                     </div>Загрузить</a>
-                                <a :class="{'is-static': path.length<=1 || !isLibraryAvailable}"
+                                <a :class="{'is-static': path === root.basename || !isLibraryAvailable}"
                                    class="button is-warning" @click="goBack">Назад</a>
                                 <a :class="{'is-static': !isLibraryAvailable}"
                                    class="button is-warning" @click="newFolder">Создать папку</a>
                                 <!--<a :class="{'is-static': items.length == 0}" class="button is-warning" @click="moveItem">Переместить</a>-->
-                                <a :class="{'is-static': !currentItem || (currentItem && currentItem.type != mediaTypes.FOLDER)} || !isLibraryAvailable"
+                                <a :class="{'is-static': !currentItem || !isLibraryAvailable}"
                                    class="button is-warning" @click="renameItem">Переименовать</a>
                                 <a :class="{'is-static': !currentItem || !isLibraryAvailable}"
                                    class="button is-warning" @click="deleteItem">Удалить</a>
@@ -34,8 +34,8 @@
                         <div class="panel-block">
                             <div class="breadcrumb" >
                                 <ul>
-                                    <li v-for="(pathItem, index) in path" @click="goToItem(pathItem)" :class="{'is-active': index == (path.length - 1)}">
-                                        <a>{{ pathItem.title }}</a>
+                                    <li v-for="(pathItem, index) in pathItems" @click="goToItem(pathItem)" :class="{'is-active': index == (path.length - 1)}">
+                                        <a>{{ pathItem.basename }}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -47,24 +47,34 @@
                                         <tr>
                                             <th data-role="button" @click="selectAll">*</th>
                                             <th>Название</th>
-                                            <th>Добавлен</th>
+                                        </tr>
+                                        <tr v-if="pathItems.length > 1 && isLibraryAvailable" @dblclick.stop="goBack">
+                                            <td>
+                                                <span><i class="fa fa-arrow-up"></i></span>
+                                            </td>
+                                            <td><span class="is-unselectable">...</span></td>
                                         </tr>
                                         <tr v-for="item in items" @dblclick.stop="onOpenItem(item)" @click.stop="onSelectItem(item)"
-                                            :class="[{'is-selected': currentItem && item.id === currentItem.id},{ 'notification is-success': isPickMode && item.isSelected}]">
+                                            :class="[{'is-selected': currentItem && item.basename === currentItem.basename},{ 'notification is-success': isPickMode && item.isSelected}]">
                                             <td>
-                                                <p v-if="isImage(item)" class="image is-16x16">
+                                                <span v-if="item.type === mediaTypes.FOLDER">
+                                                    <i class="fa fa-folder"></i>
+                                                </span>
+                                                <span v-else-if="isImage(item)" class="image is-16x16">
                                                     <img :src="fullPath(item)" alt="">
-                                                </p>
+                                                </span>
+                                                <span v-else >
+                                                    <i class="fa fa-file"></i>
+                                                </span>
                                             </td>
-                                            <td><span class="is-unselectable">{{ item.title }}</span></td>
-                                            <td><span class="is-unselectable">{{ item.created_at }}</span></td>
+                                            <td><span class="is-unselectable">{{ item.basename }}</span></td>
                                         </tr>
                                     </table>
                                 </div>
                                 <div class="column">
                                     <div v-if="currentItem">
-                                        <p class="title is-6">{{ currentItem.title }}</p>
-                                        <p class="subtitle is-6">{{ currentItem.created_at }}</p>
+                                        <p class="title is-6">{{ currentItem.basename }}</p>
+
                                         <div v-if="currentItem.type === mediaTypes.ITEM">
                                             <div>
                                                 <a :href="fullPath(currentItem)">Ссылка</a>
@@ -126,7 +136,7 @@
 
 <script>
 
-    // TODO: del, move actions
+    // TODO: move actions
     // TODO: refactor simple modal to component
 
     import MediaTypes from './../utils/types';
@@ -165,10 +175,10 @@
         data: function () {
             return {
                 items: [],
-                root: { title: 'Библиотека', id: 'root', path: '/storage/uploads/', type: 'folder'},
+                root: { basename: 'uploads', dirname: '', type: 'folder'},
                 currentFolder: undefined,
                 currentItem: undefined,
-                path: [ ],
+                path: '',
                 editForm: {
                     state: EditStates.NONE,
                     title: '',
@@ -208,7 +218,19 @@
             },
             pickedItems(){
                 return _.filter(this.items, (i) => i.isSelected);
+            },
+            pathItems(){
+
+                let pathArr = _.map(_.split(this.path, '/'), (item, i, arr)=>{
+                    return {
+                        basename: i === 0 ? 'Библиотека' : item,
+                        dirname: (i > 0 ? arr[i-1] + '/' : '') + item
+                    }
+                });
+
+                return pathArr;
             }
+
 
 
         },
@@ -257,13 +279,13 @@
                 return this.fullPath(this.currentItem);
             },
             storagePath(item){
-                return uploadPath + '/' + item.id + '-' + item.title;
+                return uploadPath + '/' + item.dirname + '/' + item.basename;
             },
             fullPath(item){
                 return baseUrl + this.storagePath(item);
             },
             isImage(item){
-                return MediaUtils.isImage(item.title);
+                return MediaUtils.isImageByExt(item.extension);
             },
             isCurrentItemImage(){
                 return this.isImage(this.currentItem.title);
@@ -285,9 +307,9 @@
                 if (!this.isLibraryAvailable)
                     return;
 
-                if (this.currentItem && this.currentItem.type === MediaTypes.FOLDER){
-                    this.editForm.title = "Переименовать папку";
-                    this.editForm.value = this.currentItem.title;
+                if (this.currentItem){
+                    this.editForm.title = "Переименовать";
+                    this.editForm.value = this.currentItem.basename;
                     this.editForm.state = EditStates.RENAME_FOLDER;
                 }
             },
@@ -296,7 +318,7 @@
                     if (this.editForm.state === EditStates.NEW_FOLDER){
 
                         CrudApi.mediaFolderNew({
-                            root: this.currentFolder,
+                            root: this.path,
                             title: this.editForm.value
                         }).then(()=>{
                             this.cancelEdit();
@@ -336,7 +358,7 @@
 
                 if (this.currentItem){
 
-                    this.showModal('Удаление', 'Подтвердите удаление ' + this.currentItem.title, ()=>{
+                    this.showModal('Удаление', 'Подтвердите удаление ' + this.currentItem.basename, ()=>{
                         CrudApi.mediaItemsDelete({
                             item: this.currentItem,
                             media_settings: this.crudField && this.crudField.additional ? this.crudField.additional : {}
@@ -360,7 +382,8 @@
             /******************************** common library actions *********************************/
             onOpenItem(item){
                 if (item.type === MediaTypes.FOLDER){
-                    this.path.splice(this.path.length, 0, item);
+                    this.path = item.dirname + '/' + item.basename;
+
                     this.getItems();
                 }
             },
@@ -372,7 +395,7 @@
 
                     if (this.type === FormBehaviorTypes.PICK){
                         _.map(this.items, (i)=> {
-                            if (i.id !== item.id)
+                            if (i.basename !== item.basename)
                                 this.$set(i, 'isSelected', false);
                         });
                     }
@@ -387,8 +410,8 @@
                 if (!this.isLibraryAvailable)
                     return;
 
-                if (this.path.length > 1){
-                    this.path.splice(this.path.length - 1, 1);
+                if (this.pathItems.length > 1){
+                    this.path = this.pathItems[this.pathItems.length - 2].dirname;
                     this.getItems();
                 }
             },
@@ -398,20 +421,16 @@
                 if (!this.isLibraryAvailable)
                     return;
 
-                let itemIndex = _.findIndex(this.path, (p)=>p.id === pathItem.id);
-
-                if (this.path.length > 0){
-                    this.path.splice(itemIndex + 1);
-                    this.getItems();
-                }
+                this.path = pathItem.dirname;
+                this.getItems();
             },
             /******************************** end common  library actions *********************************/
 
 
             getItems(){
-                this.currentFolder = _.last(this.path);
                 this.libraryState = LibraryStates.LOADING;
-                CrudApi.mediaGetItems(this.currentFolder.id, this.path)
+                this.items = [];
+                CrudApi.mediaGetItems(this.path)
                     .then((response)=>{
                         this.libraryState = LibraryStates.BROWSE;
                         this.items = response.data;
@@ -428,11 +447,13 @@
 
             if (this.crudField) this.title = 'Редактирование - ' + this.crudField.caption;
 
-            if (mediaPath && _.isArray(mediaPath) && mediaPath.length){
-                this.path.splice(0,0, ...mediaPath);
+            if (mediaPath){
+                this.path = mediaPath;
                 this.getItems();
             } else {
-                this.onOpenItem(this.root);
+
+                this.path = this.root.dirname;
+                this.getItems();
             }
         },
         mounted() {
@@ -452,7 +473,7 @@
                 },
                 sending: (file, xhr, formData) => {
                     formData.append("_token", CSRF_TOKEN);
-                    formData.append("root_id", this.currentFolder.id);
+                    formData.append("path", this.path);
                     if (this.crudField && this.crudField.additional &&
                         (this.crudField.additional.resize || this.crudField.additional.thumbnails))
                         formData.append("media_settings", JSON.stringify(this.crudField.additional));

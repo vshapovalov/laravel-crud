@@ -1,4 +1,4 @@
 export default {
     FOLDER: 'folder',
-    ITEM: 'item'
+    ITEM: 'file'
 };

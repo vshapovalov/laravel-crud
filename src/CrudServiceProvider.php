@@ -65,9 +65,6 @@ class CrudServiceProvider extends ServiceProvider
 			'crud_seeds' => [
 				"{$publishablePath}/database/seeds/" => database_path('seeds'),
 			],
-			'crud_scripts' => [
-				"{$publishablePath}/database/scripts/" => database_path('scripts'),
-			],
 			'crud_config' => [
 				"{$publishablePath}/config/cruds.php" => config_path('cruds.php'),
 			],

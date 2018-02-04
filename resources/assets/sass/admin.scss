@@ -173,3 +173,54 @@ html{
   padding: 5px;
   word-break: break-all;
 }
+
+
+ table {
+   tr {
+     cursor: pointer;
+
+     &.is-selected {
+
+       &:hover {
+         background-color: #00d1b2 !important;
+       }
+     }
+   }
+ }
+
+.media-library{
+  .panel{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    .panel-block{
+      flex-shrink: 0;
+
+      .breadcrumb{
+        ul{
+          margin: 0;
+        }
+      }
+
+      &.is-block{
+        flex-shrink: 1;
+        flex-grow: 1;
+        overflow-y: scroll;
+
+      }
+    }
+  }
+
+  .modal-content{
+    position: relative;
+
+    .container{
+      height: 100%;
+
+      .panel{
+        height: 100%;
+      }
+    }
+  }
+}
