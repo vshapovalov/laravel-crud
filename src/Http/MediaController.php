@@ -32,7 +32,7 @@ class MediaController extends BaseController
     	if (count($media_settings))
     		$this->settings = $media_settings;
 
-		foreach ($request->allFiles() as $file){
+		foreach ($request->allFiles() as $file) {
 
 			$fileName = $file->getClientOriginalName();
 
@@ -40,95 +40,91 @@ class MediaController extends BaseController
 
 			$fullFileName = $fileName;
 
-			$ext = pathinfo($fullFileName, PATHINFO_EXTENSION);
+			$ext = pathinfo( $fullFileName, PATHINFO_EXTENSION );
+
+			if ( in_array( $ext, $this->fileTypes ) && count( $this->settings ) ) {
+
+				$image = Image::make( $file );
+
+				$image->backup();
+
+				$quality = null;
+
+				if ( isset( $this->settings['resize'] ) ) {
 
 
+					$quality = isset( $this->settings['resize']['quality'] ) ? $this->settings['resize']['quality'] : $quality;
 
-    		if (in_array($ext, $this->fileTypes)){
+					if ( isset( $this->settings['resize']['width'] ) && $this->settings['resize']['height'] ) {
+						$image->resize(
+							$this->settings['resize']['width'],
+							$this->settings['resize']['height'],
+							function ( $constraint ) {
+								$constraint->aspectRatio();
+								$constraint->upsize();
+							}
+						)->encode( $ext, $quality );
+					}
 
-			    if (count($this->settings)){
+					$image->backup();
+				}
 
-				    $image = Image::make($file);
+				Storage::disk( 'public' )->put( $parentFolder . '/' . $fullFileName, $image->stream() );
 
-				    $image->backup();
+				if ( isset( $this->settings['thumbnails'] ) ) {
+					foreach ( $this->settings['thumbnails'] as $thumb ) {
 
-				    $quality = null;
+						$image->reset();
 
-			    	if (isset($this->settings['resize'])){
+						$thumbFilename = substr( $fullFileName, 0, strrpos( $fullFileName, '.' . $ext ) )
+						                 . '-' . $thumb['name'] . '.' . $ext;
 
+						$width = $image->getWidth();
 
-					    $quality = isset($this->settings['resize']['quality']) ? $this->settings['resize']['quality'] : $quality;
+						if ( isset( $thumb['scale'] ) ) {
 
-			    		if (isset($this->settings['resize']['width']) && $this->settings['resize']['height']){
-						    $image->resize(
-							    $this->settings['resize']['width'],
-							    $this->settings['resize']['height'],
-							    function($constraint){
-								    $constraint->aspectRatio();
-								    $constraint->upsize();
-							    }
-						    )->encode($ext, $quality);
-					    }
+							$image->resize(
+								round( $width * ( $thumb['scale'] / 100 ) ),
+								null,
+								function ( $constraint ) {
+									$constraint->aspectRatio();
+									$constraint->upsize();
+								}
+							);
+						}
 
-					    $image->backup();
-				    }
+						if ( isset( $thumb['crop'] ) ) {
 
-				    Storage::disk('public')->put($parentFolder . '/' . $fullFileName, $image->stream());
+							$image->crop(
+								$thumb['crop']['width'],
+								$thumb['crop']['height']
+							);
+						}
 
-				    if (isset($this->settings['thumbnails'])){
-			    		foreach ($this->settings['thumbnails'] as $thumb){
-
-						    $image->reset();
-
-			    			$thumbFilename = substr($fullFileName, 0, strrpos($fullFileName, '.'.$ext))
-						                     . '-'.$thumb['name'] . '.' . $ext;
-
-			    			$width = $image->getWidth();
-
-			    			if (isset($thumb['scale'])){
-
-							    $image->resize(
-								    round($width * ($thumb['scale'] / 100)),
-								    null,
-								    function($constraint){
-									    $constraint->aspectRatio();
-									    $constraint->upsize();
-								    }
-							    );
-						    }
-
-						    if (isset($thumb['crop'])){
-
-							    $image->crop(
-								    $thumb['crop']['width'],
-								    $thumb['crop']['height']
-							    );
-						    }
-
-						    if (isset($thumb['fit'])){
+						if ( isset( $thumb['fit'] ) ) {
 
 //						    	position
 //							    top-left, top, top-right, left, center (default), right, bottom-left,
 //								bottom, bottom-right
 
-							    $image->fit($thumb['fit']['width'], $thumb['fit']['height'], function ($constraint) {
-								    $constraint->upsize();
-							    }, isset($thumb['fit']['position'])? $thumb['fit']['position'] : 'center');
+							$image->fit( $thumb['fit']['width'], $thumb['fit']['height'], function ( $constraint ) {
+								$constraint->upsize();
+							}, isset( $thumb['fit']['position'] ) ? $thumb['fit']['position'] : 'center' );
 
-						    }
+						}
 
-						    Storage::disk('public')->put($parentFolder . '/' . $thumbFilename, $image->stream());
+						Storage::disk( 'public' )->put( $parentFolder . '/' . $thumbFilename, $image->stream() );
 
-					    }
-				    }
+					}
+				}
 
-				    $image->destroy();
-			    }
-		    } else {
+				$image->destroy();
+			} else {
 
-			    Storage::disk('public')->putFileAs($parentFolder, $file, $fullFileName);
-		    }
-	    }
+				Storage::disk( 'public' )->putFileAs( $parentFolder, $file, $fullFileName );
+			}
+		}
+
 
 	    return ['success' => true, 'message' => implode(', ', $files)];
     }
