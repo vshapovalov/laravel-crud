@@ -137,7 +137,7 @@ class MediaController extends BaseController
 
 	    $path = 'uploads';
 
-	    if (($parentDir = $request->input('path', false)) &&
+	    if (($parentDir = $request->input('path', false)) && is_string($parentDir) &&
 
 	        Storage::disk('public')->exists($parentDir)){
 
