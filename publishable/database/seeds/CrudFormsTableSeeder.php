@@ -650,7 +650,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'caption' => 'additional',
 				    'type' => 'textarea',
 				    'visibility' => '["add","edit"]',
-				    'by_default' => null,
+				    'by_default' => '{ "mode":"single", "type":"image", "resize": {"width": 1440, "height": null, "quality": 90}}   {"mode":"single", "values": [ {"key":"", "value":""} ]}',
 				    'json' => 0,
 				    'readonly' => 0,
 				    'description' => null,

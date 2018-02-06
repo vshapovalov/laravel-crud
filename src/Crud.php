@@ -286,28 +286,20 @@ class Crud {
 		if (is_string($crud))
 			$crud = $this->getCrudByCode($crud);
 
-		$item = new $crud['model'];
-
 		$qb = call_user_func($crud['model']."::query");
 
-//		$relationships = array_keys($item->relationships());
+		$relationFields = array_map(
 
-//		$fields = array_map(function($f){
-//			return $f['name'];
-//		},
-//			array_filter($crud['meta']['fields'], function($f){ return $f['type'] != 'relation'; })
-//		);
-//
-//		$qb->select($fields);
+			function($f){ return $f['name']; },
 
-		$relationFields = array_map(function($f){
-			return $f['name'];
-		}, array_filter($crud['fields'], function($f){
-			return $f['type'] == 'relation' && (!isset($f['json']) || (isset($f['json']) && !$f['json']));
-		}));
+			array_filter( $crud['fields'], function($f){
+				return $f['type'] == 'relation'
+				       && ( !isset($f['json']) || (isset($f['json']) && !$f['json']))
+				       && ( in_array('browse', $f['visibility']) || count($f['visibility']) == 0);
+			})
+		);
 
 		$relationFields = array_values($relationFields);
-
 
 		if (count($relationFields)){
 			$qb = $qb->with($relationFields);
@@ -557,28 +549,25 @@ class Crud {
 						$item->save();
 					}
 
+					$targetRelationIds = isset($crudField) && count($crudField) ? array_column($crudField, $relationCrud['id']) : [];
 
+					$relationShips = $this->getModelRelations($item);
+					$relationForeignKey = $relationShips[$field['name']]['foreign_key'];
+
+					// disassociate
 					if (isset($id)){
 
-						$relationShips = $this->getModelRelations($item);
-
-						$relationForeignKey = $relationShips[$field['name']]['foreign_key'];
-
-						forEach($item->{$field['name']} as $relatedItem){
-							$relatedItem->{$relationForeignKey} = null;
-							$relatedItem->save();
-						}
-
+						$item->{$field['name']}()->whereNotIn($relationCrud['id'], $targetRelationIds)->update([
+							$relationForeignKey => null
+						]);
 					}
 
+					// save missing items
 					if (isset($crudField) && !empty($crudField)){
-						forEach($crudField as $crudRelatedItem){
 
-							$relatedItem = $this->getModelByCrud($relationCrud, $crudRelatedItem[$relationCrud['id']], true);
-
-							$item->{$field['name']}()->save($relatedItem);
-
-						}
+						$relationCrud['model']::whereIn($relationCrud['id'], $targetRelationIds)->update([
+							$relationForeignKey => $item->{$crud['id']}
+						]);
 					}
 
 					continue;

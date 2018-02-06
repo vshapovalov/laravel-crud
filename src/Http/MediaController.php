@@ -15,7 +15,7 @@ class MediaController extends BaseController
 	private $settings;
 
 	function __construct() {
-		$this->fileTypes = ['jpeg', 'jpg', 'png'];
+		$this->fileTypes = ['jpeg', 'jpg', 'png', 'gif', 'ico'];
 		$this->settings = config('cruds.media_default_settings', []);
 
 		$this->middleware('auth');
@@ -23,16 +23,16 @@ class MediaController extends BaseController
 
 	function putMedia(request $request){
 
-	    $parentFolder = $request->input('path', 'uploads');
+		$parentFolder = $request->input('path', 'uploads');
 
-	    $files = [];
+		$files = [];
 
 		$media_settings = json_decode($request->input('media_settings','{}'), true);
 
-    	if (count($media_settings))
-    		$this->settings = $media_settings;
+		if (count($media_settings))
+			$this->settings = $media_settings;
 
-		foreach ($request->allFiles() as $file) {
+		foreach ($request->allFiles() as $file){
 
 			$fileName = $file->getClientOriginalName();
 
@@ -40,60 +40,59 @@ class MediaController extends BaseController
 
 			$fullFileName = $fileName;
 
-			$ext = pathinfo( $fullFileName, PATHINFO_EXTENSION );
+			$ext = pathinfo($fullFileName, PATHINFO_EXTENSION);
 
-			if ( in_array( $ext, $this->fileTypes ) && count( $this->settings ) ) {
+			if (in_array($ext, $this->fileTypes) && count($this->settings)){
 
-				$image = Image::make( $file );
+				$image = Image::make($file);
 
 				$image->backup();
 
 				$quality = null;
 
-				if ( isset( $this->settings['resize'] ) ) {
+				if (isset($this->settings['resize'])){
 
+					$quality = isset($this->settings['resize']['quality']) ? $this->settings['resize']['quality'] : $quality;
 
-					$quality = isset( $this->settings['resize']['quality'] ) ? $this->settings['resize']['quality'] : $quality;
-
-					if ( isset( $this->settings['resize']['width'] ) && $this->settings['resize']['height'] ) {
+					if (isset($this->settings['resize']['width']) || isset($this->settings['resize']['height'])){
 						$image->resize(
-							$this->settings['resize']['width'],
-							$this->settings['resize']['height'],
-							function ( $constraint ) {
+							isset($this->settings['resize']['width']) ? $this->settings['resize']['width'] : null,
+							isset($this->settings['resize']['height']) ? $this->settings['resize']['height'] : null,
+							function($constraint){
 								$constraint->aspectRatio();
 								$constraint->upsize();
 							}
-						)->encode( $ext, $quality );
+						)->encode($ext, $quality);
 					}
 
 					$image->backup();
 				}
 
-				Storage::disk( 'public' )->put( $parentFolder . '/' . $fullFileName, $image->stream() );
+				Storage::disk('public')->put($parentFolder . '/' . $fullFileName, $image->stream());
 
-				if ( isset( $this->settings['thumbnails'] ) ) {
-					foreach ( $this->settings['thumbnails'] as $thumb ) {
+				if (isset($this->settings['thumbnails'])){
+					foreach ($this->settings['thumbnails'] as $thumb){
 
 						$image->reset();
 
-						$thumbFilename = substr( $fullFileName, 0, strrpos( $fullFileName, '.' . $ext ) )
-						                 . '-' . $thumb['name'] . '.' . $ext;
+						$thumbFilename = substr($fullFileName, 0, strrpos($fullFileName, '.'.$ext))
+						                 . '-'.$thumb['name'] . '.' . $ext;
 
 						$width = $image->getWidth();
 
-						if ( isset( $thumb['scale'] ) ) {
+						if (isset($thumb['scale'])){
 
 							$image->resize(
-								round( $width * ( $thumb['scale'] / 100 ) ),
+								round($width * ($thumb['scale'] / 100)),
 								null,
-								function ( $constraint ) {
+								function($constraint){
 									$constraint->aspectRatio();
 									$constraint->upsize();
 								}
 							);
 						}
 
-						if ( isset( $thumb['crop'] ) ) {
+						if (isset($thumb['crop'])){
 
 							$image->crop(
 								$thumb['crop']['width'],
@@ -101,33 +100,33 @@ class MediaController extends BaseController
 							);
 						}
 
-						if ( isset( $thumb['fit'] ) ) {
+						if (isset($thumb['fit'])){
 
 //						    	position
 //							    top-left, top, top-right, left, center (default), right, bottom-left,
 //								bottom, bottom-right
 
-							$image->fit( $thumb['fit']['width'], $thumb['fit']['height'], function ( $constraint ) {
+							$image->fit($thumb['fit']['width'], $thumb['fit']['height'], function ($constraint) {
 								$constraint->upsize();
-							}, isset( $thumb['fit']['position'] ) ? $thumb['fit']['position'] : 'center' );
+							}, isset($thumb['fit']['position'])? $thumb['fit']['position'] : 'center');
 
 						}
 
-						Storage::disk( 'public' )->put( $parentFolder . '/' . $thumbFilename, $image->stream() );
+						Storage::disk('public')->put($parentFolder . '/' . $thumbFilename, $image->stream());
 
 					}
 				}
 
 				$image->destroy();
+
 			} else {
 
-				Storage::disk( 'public' )->putFileAs( $parentFolder, $file, $fullFileName );
+				Storage::disk('public')->putFileAs($parentFolder, $file, $fullFileName);
 			}
 		}
 
-
-	    return ['success' => true, 'message' => implode(', ', $files)];
-    }
+		return ['success' => true, 'message' => implode(', ', $files)];
+	}
 
     function getItems(Request $request){
 
