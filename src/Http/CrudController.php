@@ -78,9 +78,26 @@ class CrudController extends BaseController
 
 		};
 
-		$response['item'] = Crud::saveCrudItem( $code, $request->input('item') ) ;
+		$crud = Crud::getCrudByCode($code);
 
-		return $response;
+		$checkAction = isset($request->input('item')[$crud['id']]) ? 'edit' : 'add';
+
+
+		if (Crud::checkAccess($code, $checkAction)) {
+			$response['item'] = Crud::saveCrudItem( $code, $request->input('item') ) ;
+
+			return $response;
+		} else {
+
+			$response['status'] = 'error';
+			$response['errors'] = [
+				'access' => ['Недостаточно прав']
+			];
+
+			return $response;
+		}
+
+
 	}
 
 	function deleteItem($code, $id){
@@ -89,10 +106,17 @@ class CrudController extends BaseController
 			'status' => 'success'
 		];
 
-		Crud::deleteCrudItem($code, $id);
+		if (Crud::checkAccess($code, 'delete')) {
+			Crud::deleteCrudItem($code, $id);
 
-		return $response;
+			return $response;
+		} else {
 
+			$response['status'] = 'error';
+			$response['error'] = 'Недостаточно прав';
+
+			return $response;
+		}
 	}
 
 	function treeUpdateItems($code, Request $request){

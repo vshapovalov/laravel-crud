@@ -27,6 +27,8 @@ class CrudFormsTableSeeder extends Seeder
 	    $user->password = '$2y$10$yXXgm2NZ5pEIFRl6U5C4sOiamvuMv6pC/5R/Cadr3Rr.UoYtxM.Q2';
 	    $user->save();
 
+	    DB::table('user_role')->insert(['role_id' => $role->id, 'user_id' => $user->id]);
+
 	    /******************* crud forms ******************/
 
 	    $formUser = new \Vshapovalov\Crud\Models\CrudForm();
@@ -186,6 +188,62 @@ class CrudFormsTableSeeder extends Seeder
 	    $relationCrudMenuBTM->crud_form_id = $formCrudMenu->sur_id;
 	    $relationCrudMenuBTM->save();
 
+	    $relationCrudFormForRoles = new \Vshapovalov\Crud\Models\CrudRelation();
+	    $relationCrudFormForRoles->type = 'belongsToMany';
+	    $relationCrudFormForRoles->crud_form_id = $formForm->sur_id;
+	    $relationCrudFormForRoles->save();
+
+	    $relationCrudFormForRoles->pivot()->createMany([
+		    [
+			    'name' => 'add',
+			    'caption' => 'Добавление',
+			    'type' => 'checkbox',
+			    'visibility' => '[ "browse", "edit", "add" ]',
+			    'by_default' => 1,
+			    'json' => 0,
+			    'readonly' => 0,
+			    'description' => null,
+			    'tab' => 'Основные параметры',
+			    'validation' => 'required',
+			    'additional' => null,
+			    'crud_relation_id' => null,
+			    'order' => 1,
+			    'columns' => 6
+		    ],
+		    [
+			    'name' => 'edit',
+			    'caption' => 'Редактирование',
+			    'type' => 'checkbox',
+			    'visibility' => '[ "browse", "edit", "add" ]',
+			    'by_default' => 1,
+			    'json' => 0,
+			    'readonly' => 0,
+			    'description' => null,
+			    'tab' => 'Основные параметры',
+			    'validation' => null,
+			    'additional' => null,
+			    'crud_relation_id' => null,
+			    'order' => 2,
+			    'columns' => 6
+		    ],
+		    [
+			    'name' => 'delete',
+			    'caption' => 'Удаление',
+			    'type' => 'checkbox',
+			    'visibility' => '[ "browse", "edit", "add" ]',
+			    'by_default' => 1,
+			    'json' => 0,
+			    'readonly' => 0,
+			    'description' => null,
+			    'tab' => 'Основные параметры',
+			    'validation' => 'required',
+			    'additional' => null,
+			    'crud_relation_id' => null,
+			    'order' => 3,
+			    'columns' => 6
+		    ]
+	    ]);
+
 	    $relationMenuItem = new \Vshapovalov\Crud\Models\CrudRelation();
 	    $relationMenuItem->type = 'belongsTo';
 	    $relationMenuItem->crud_form_id = $formMenuItem->sur_id;
@@ -207,22 +265,22 @@ class CrudFormsTableSeeder extends Seeder
 	    $formUser->fields()->createMany(
 	    	[
 
-		        [
-				    'name' => 'roles',
-				    'caption' => 'Роли',
-				    'type' => 'relation',
-				    'visibility' => '["add","edit"]',
-				    'by_default' => null,
-				    'json' => 0,
-				    'readonly' => 0,
-				    'description' => null,
-				    'tab' => 'Роли',
-				    'validation' => null,
-				    'additional' => null,
-		            'crud_relation_id' => $relationRole->id,
-				    'order' => 4,
-				    'columns' => 12
-			    ],
+//		        [
+//				    'name' => 'roles',
+//				    'caption' => 'Роли',
+//				    'type' => 'relation',
+//				    'visibility' => '["add","edit"]',
+//				    'by_default' => null,
+//				    'json' => 0,
+//				    'readonly' => 0,
+//				    'description' => null,
+//				    'tab' => 'Роли',
+//				    'validation' => null,
+//				    'additional' => null,
+//		            'crud_relation_id' => $relationRole->id,
+//				    'order' => 4,
+//				    'columns' => 12
+//			    ],
 			    [
 				    'name' => 'name',
 				    'caption' => 'ФИО',
@@ -506,7 +564,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'caption' => 'type',
 				    'type' => 'dropdown',
 				    'visibility' => '[ "browse", "edit", "add" ]',
-				    'by_default' => null,
+				    'by_default' => 'textbox',
 				    'json' => 0,
 				    'readonly' => 0,
 				    'description' => null,
@@ -538,7 +596,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'caption' => 'visibility',
 				    'type' => 'dropdown',
 				    'visibility' => '[ "browse", "edit", "add" ]',
-				    'by_default' => '[ "browse", "edit", "add" ]',
+				    'by_default' => '[ "edit", "add" ]',
 				    'json' => 0,
 				    'readonly' => 0,
 				    'description' => null,
@@ -682,7 +740,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'caption' => 'columns',
 				    'type' => 'dropdown',
 				    'visibility' => '["add","edit"]',
-				    'by_default' => '12',
+				    'by_default' => '6',
 				    'json' => 0,
 				    'readonly' => 0,
 				    'description' => null,
@@ -932,6 +990,22 @@ class CrudFormsTableSeeder extends Seeder
 					'additional' => null,
 					'crud_relation_id' => $relationCrudMenuBTM->id,
 					'order' => 3,
+					'columns' => 12
+				],
+				[
+					'name' => 'forms',
+					'caption' => 'Доступ к данным',
+					'type' => 'relation',
+					'visibility' => '["add","edit"]',
+					'by_default' => null,
+					'json' => 0,
+					'readonly' => 0,
+					'description' => null,
+					'tab' => 'Доступ к данным',
+					'validation' => null,
+					'additional' => '{ buttons: ["pick", "delete_all"] }',
+					'crud_relation_id' => $relationCrudFormForRoles->id,
+					'order' => 4,
 					'columns' => 12
 				]
 			]
@@ -1270,7 +1344,56 @@ class CrudFormsTableSeeder extends Seeder
 	    $menu->status = 'enabled';
 	    $menu->save();
 
-
+	    DB::table('role_crud_form')->insert([
+	    	[
+	    		'role_id' => $role->id,
+			    'crud_form_id' => $formForm->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formRelation->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formSetting->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formSettingGroup->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formFieldType->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formMenuItem->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formRole->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formCrudMenu->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formFields->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formScopes->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formScopeParam->sur_id
+		    ],
+		    [
+			    'role_id' => $role->id,
+			    'crud_form_id' => $formUser->sur_id
+		    ]
+	    ]);
 
 
     }

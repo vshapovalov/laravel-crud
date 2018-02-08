@@ -31,3 +31,11 @@ if(!function_exists('crud_settings')){
 		return Crud::settings($settingCode);
 	}
 }
+
+if(!function_exists('crud_roles')){
+
+	function crud_roles(){
+
+		return \Vshapovalov\Crud\Models\Role::getData(null,null,['users', 'forms']);
+	}
+}

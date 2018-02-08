@@ -3,8 +3,6 @@
 namespace Vshapovalov\Crud\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
-
 
 class CrudForm extends Model
 {
@@ -23,7 +21,8 @@ class CrudForm extends Model
 
 	public function save( array $options = [] ) {
 
-    	Cache::forget('crud.list');
+
+    	cache()->forget('crud.list');
 
 		return parent::save( $options );
 	}

@@ -55,8 +55,13 @@ class Crud {
 
 		foreach ($cruds as &$crud){
 			foreach($crud['fields'] as &$field){
-				if (isset($field['by_default']) && is_callable($field['by_default'])){
-					$field['by_default'] = $field['by_default']();
+				if (isset($field['by_default']) && (str_contains($field['by_default'], 'callback::')) ){
+
+					$struct = explode('::', $field['by_default']);
+
+					if (isset($struct[1]) && function_exists($struct[1])){
+						$field['by_default'] = call_user_func($struct[1]);
+					}
 				}
 
 				$field['visibility'] = json_decode($field['visibility'], true);
@@ -96,7 +101,7 @@ class Crud {
 
 		if (!count($this->cruds)){
 
-			$this->cruds = Cache::remember( 'crud.list', 1440, function(){
+			$this->cruds = cache()->rememberForever( 'crud.list', function(){
 				$cruds = $this->loadCrudForms();
 
 				$cruds = $this->setDefaultValues($cruds);
@@ -195,15 +200,24 @@ class Crud {
 		if (is_string($crud))
 			$crud = $this->getCrudByCode($crud);
 
-		$item = new $crud['model'];
-
 		$qb = call_user_func($crud['model']."::query");
 
 		if ($withRelations) {
 
-			$relationships = array_keys($this->getModelRelations($item));
+			$relationFields = array_map(
 
-			$qb->with($relationships);
+				function($f){ return $f['name']; },
+
+				array_filter( $crud['fields'], function($f){
+					return $f['type'] == 'relation'
+					       && ( !isset($f['json']) || (isset($f['json']) && !$f['json']))
+					       && ( in_array('edit', $f['visibility']) || count($f['visibility']) == 0);
+				})
+			);
+
+			$relationFields = array_values($relationFields);
+
+			$qb->with($relationFields);
 		}
 
 		return $qb->find($id);
@@ -383,16 +397,34 @@ class Crud {
 		return false;
 	}
 
+	function checkAccess($crudCode, $checkAction){
+
+		return crud_roles()->filter(function ($role, $key) use ($crudCode, $checkAction){
+			 if ($role->users->first(function ($user, $key) {
+					return $user->id == Auth::user()->id;
+				})) {
+
+			 	return $role->forms->first(function ($form, $key) use ($crudCode, $checkAction){
+				    return ($form->code == $crudCode) && $form->pivot->{$checkAction};
+			    });
+			 }
+
+			 return false;
+		})->count();
+	}
+
 	function saveCrudItem($crud, $inputValues){
 
 		if (is_string($crud))
 			$crud = $this->getCrudByCode($crud);
 
 		if (isset($inputValues[$crud['id']])) {
+
 			$id = $inputValues[$crud['id']];
 
 			$item = $this->getModelByCrud($crud, $id, true);
 		} else {
+
 			$item = new $crud['model'];
 		}
 

@@ -163,11 +163,17 @@
                     this.isReady = false;
                     CrudApi.crudDeleteItem(this.crud.code, item[this.crud.id])
                         .then((response)=>{
-                            let rowIndex = _.findIndex(this.items, (r)=>{ return (r[this.crud.id] === item[this.crud.id]) });
 
-                            this.items.splice(rowIndex, 1);
+
+                            if (response.data.status == 'success'){
+                                let rowIndex = _.findIndex(this.items, (r)=>{ return (r[this.crud.id] === item[this.crud.id]) });
+                                this.items.splice(rowIndex, 1);
+                                toastr.success('Запись удалена');
+                            } else {
+                                toastr.error(response.data.error);
+                            }
+
                             this.isReady = true;
-                            toastr.success('Запись удалена');
                         })
                         .catch((error)=>{
                             this.isReady = true;
