@@ -143,7 +143,9 @@ class MediaController extends BaseController
 	    if ($path) {
 		    Session::put('media.path', $path);
 	    }
-
+		
+		setlocale(LC_ALL,'en_US.UTF-8');
+		
 	    return array_merge(array_map(function($f){
 
 			    $pi = pathinfo($f);
