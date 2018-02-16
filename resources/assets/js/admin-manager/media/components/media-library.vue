@@ -54,7 +54,7 @@
                                             </td>
                                             <td><span class="is-unselectable">...</span></td>
                                         </tr>
-                                        <tr v-for="item in items" @dblclick.stop="onOpenItem(item)" @click.stop="onSelectItem(item)"
+                                        <tr v-for="item in items" @dblclick.stop.prevent="onOpenItem(item)" @click.stop.prevent="onSelectItem(item)"
                                             :class="[{'is-selected': currentItem && item.basename === currentItem.basename},{ 'notification is-success': isPickMode && item.isSelected}]">
                                             <td>
                                                 <span v-if="item.type === mediaTypes.FOLDER">
@@ -385,6 +385,11 @@
                     this.path = item.dirname + '/' + item.basename;
 
                     this.getItems();
+                }
+
+                if (item.type === MediaTypes.ITEM && (this.type === FormBehaviorTypes.PICK)){
+                    this.onSelectItem(item);
+                    this.pickItem();
                 }
             },
             onSelectItem(item){

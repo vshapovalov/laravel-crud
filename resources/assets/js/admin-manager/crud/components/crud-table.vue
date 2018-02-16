@@ -23,7 +23,7 @@
         </tr>
 
 
-        <tr v-for="item in preparedItems" @click.prevent="selectItem(item)" :class="{'is-selected': item.isSelected}">
+        <tr v-for="item in preparedItems" @dblclick.prevent.stop="editItem(item)" @click.prevent="selectItem(item)" :class="{'is-selected': item.isSelected}">
             <td v-for="field in crudBrowsableFields">
                 <crud-caption :item="item" :field="field" :is-pivot="field.isPivot"></crud-caption>
             </td>

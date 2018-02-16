@@ -33,7 +33,14 @@
                     return;
                 }
 
-                this.$emit("change", $event.target.value);
+                if (this.field.additional && this.field.additional.mode === 'masked' && this.field.additional.mask) {
+
+                    this.$emit("change", $(this.$refs.input).masked($event.target.value));
+
+                } else {
+
+                    this.$emit("change", $event.target.value);
+                }
             }
         },
         mounted() {
@@ -44,7 +51,22 @@
                 } else {
                     if (this.field.additional.mode === 'masked' && this.field.additional.mask) {
 
-                        $(this.$refs.input).mask(this.field.additional.mask, {clearIfNotMatch: true});
+                        let maskOptions = {
+                            clearIfNotMatch: true,
+                            translation: {
+                                'P': {pattern: /[,.]/, optional: true}
+                            }
+                        };
+
+                        if (this.field.additional.placeholder){
+                            maskOptions['placeholder'] = this.field.additional.placeholder;
+                        }
+
+                        if (this.field.additional.reverse){
+                            maskOptions['reverse'] = this.field.additional.reverse;
+                        }
+
+                        $(this.$refs.input).mask(this.field.additional.mask, maskOptions);
                     }
                 }
 
