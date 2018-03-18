@@ -152,8 +152,6 @@
             },
 
             saveItem(item){
-                console.log('this.editingRow', item);
-
                 this.getList();
 
             },

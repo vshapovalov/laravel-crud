@@ -32,7 +32,7 @@
                                         :field="field"></crud-dropdown>
                                 <crud-relation-one
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO || field.relation.type === relationTypes.HAS_ONE))"
-                                        v-model="item[field.json ? field.name : toSnake(field.name)]" :field="field"></crud-relation-one>
+                                        v-model="item[field.json ? field.name : toSnake(field.name)]" :field="field" :item="item"></crud-relation-one>
                                 <crud-relation-many
                                         v-else-if="(getFieldType(field) === fieldTypes.RELATION && field.relation.type == relationTypes.HAS_MANY)"
                                         v-model="item[toSnake(field.name)]" :field="field" :item="item"></crud-relation-many>
@@ -175,8 +175,6 @@
             doSave(){
                 this.isReady = false;
 
-                console.log('this.item', this.item);
-
                 CrudApi.crudSaveItem(this.crud.code, { item: this.item})
                     .then((response)=>{
 
@@ -216,7 +214,6 @@
             this.activeTab = this.crudTabs[0];
             if (!this.itemId) {
                 this.item = CrudUtils.createMetaObject(this.crud.fields);
-                console.log('editpanel:newitem', this.item);
                 CrudUtils.spreadJsonFields(this.item, this.crud.fields, true);
                 this.isReady = true;
             } else {

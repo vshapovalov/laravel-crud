@@ -518,7 +518,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'tab' => 'Основные параметры',
 				    'validation' => null,
 				    'additional' => null,
-				    'crud_relation_id' => null,
+				    'crud_relation_id' => $relationScopeParam->id,
 				    'order' => 1,
 				    'columns' => 12
 			    ]

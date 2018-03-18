@@ -4,16 +4,16 @@
             <input class="input" type="text" placeholder="" :value="relatedName" readonly @dblclick.prevent.stop="openCrud" @click.prevent.stop="showItem">
         </div>
         <div class="control">
-            <a class="button is-info" @click.prevent.stop="openCrud">Выбрать</a>
+            <a class="button is-info" v-show="isButtonVisible('pick')" @click.prevent.stop="openCrud">Выбрать</a>
         </div>
         <div class="control">
-            <a class="button is-primary" @click.prevent.stop="addItem">Добавить</a>
+            <a class="button is-primary" v-show="isButtonVisible('add')" @click.prevent.stop="addItem">Добавить</a>
         </div>
         <div class="control">
-            <a class="button is-warning" @click.prevent.stop="editItem">Изменить</a>
+            <a class="button is-warning" v-show="isButtonVisible('edit')" @click.prevent.stop="editItem">Изменить</a>
         </div>
         <div class="control">
-            <a class="button is-danger" @click.prevent.stop="clearItem">Очистить</a>
+            <a class="button is-danger" v-show="isButtonVisible('clear')" @click.prevent.stop="clearItem">Очистить</a>
         </div>
     </div>
 </template>
@@ -27,12 +27,13 @@
     export default {
         name: 'crud-relation-one',
         model: {
-            prop: "item",
+            prop: "value",
             event: "change"
         },
         props: {
             field: {},
-            item: null
+            item: null,
+            value: null
         },
         data: function () {
             return {
@@ -42,12 +43,12 @@
         },
         computed: {
             relatedName(){
-                return (this.item) ? Utils.getDisplayValue(this.crud.display, this.item) : '';
+                return (this.value) ? Utils.getDisplayValue(this.crud.display, this.value) : '';
             }
         },
         methods: {
             showItem(){
-                console.log(this.item);
+                console.log(this.value);
             },
 
             clearItem(){
@@ -58,6 +59,9 @@
                 }
 
                 this.changeItem({});
+            },
+            isButtonVisible(code){
+                return !this.field.additional || !this.field.additional.buttons || _.find(this.field.additional.buttons, btn=>btn===code);
             },
             changeItem(item){
                 if (this.field.readonly)
@@ -84,7 +88,7 @@
                     toastr.info("Редактирование запрещено");
                     return;
                 }
-                Bus.$emit('editpanel:mount', this.crud, this.item[this.crud.id] , this.changeItem);
+                Bus.$emit('editpanel:mount', this.crud, this.value[this.crud.id] , this.changeItem);
             },
             openCrud(){
                 if (this.field.readonly)
@@ -95,6 +99,8 @@
 
                 if (this.crud)
                 {
+
+                    console.log('item from rel-one', this.item);
 
                     let crudEditor = new CrudBuilder(this.crud, CrudTypes.PICK)
                         .onPick((values)=> {

@@ -8,7 +8,7 @@ export default class CrudEditor {
         this.editorType = editorType;
         this.onPick = onPick;
         this.onCancel = onCancel;
-        this.inputItem = onGetItem ? onGetItem() : undefined;
+        this.inputItem = onGetItem ? onGetItem() : null;
     }
 
     createEditor(){

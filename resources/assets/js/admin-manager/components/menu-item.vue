@@ -3,7 +3,7 @@
         <a @click.stop.prevent="onClick">{{ item.caption }}</a>
         <transition name="slide">
             <div v-show="opened" class="nested-items">
-                <menu-item key="nestedItem.name" v-for="nestedItem in item.items" :item="nestedItem" @selected="onSelected"></menu-item>
+                <menu-item :key="nestedItem.id" v-for="nestedItem in item.items" :item="nestedItem" @selected="onSelected"></menu-item>
             </div>
         </transition>
     </div>

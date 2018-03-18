@@ -14,7 +14,7 @@
                     </div>
                 </div>
                 <div class="menu-container">
-                    <menu-item key="menuItem.name" v-for="menuItem in menu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
+                    <menu-item :key="menuItem.id" v-for="menuItem in menu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
                 </div>
             </div>
             <div id="workspace" class="content"></div>
@@ -93,7 +93,7 @@
                 Bus.$emit(menuItem.action, menuItem.action, menuItem.caption);
 
             },
-            mountEditPanel(crud, item,fields, onSave = null, onCancel = null){
+            mountEditPanel(crud, item, fields, onSave = null, onCancel = null){
                 let instance = new CrudEditPanel(null, crud, item,fields, onSave, onCancel);
                 Bus.$emit('admin:instance:mount', instance, false);
             },
@@ -126,6 +126,7 @@
 
             onConfigLoaded(config){
                 this.cruds = config.list;
+
                 this.menu.splice(0,0,...config.menu);
                 this.additionalComponents.splice(0,0,...config.components);
                 this.registerDefaultComponents();
