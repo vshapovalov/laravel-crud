@@ -12,16 +12,17 @@
   "devDependencies": {
     "axios": "^0.17",
     "cross-env": "^5.0.1",
-    "jquery": "^3.2",
-    "laravel-mix": "^1.0",
-    "lodash": "^4.17.4",
-    "vue": "^2.1.10",
     "datetimepicker": "^0.1.38",
     "dropzone": "^5.1.1",
+    "jquery": "^3.2",
     "jquery-mask-plugin": "^1.14.12",
+    "laravel-mix": "^1.0",
+    "lodash": "^4.17.4",
     "slugify": "^1.2.1",
     "tinymce": "^4.7.0",
-    "toastr": "^2.1.2"
+    "toastr": "^2.1.2",
+    "transliteration": "^1.6.2",
+    "vue": "^2.1.10"
   },
   "dependencies": {
     "bulma": "^0.5.3"

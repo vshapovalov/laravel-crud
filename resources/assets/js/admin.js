@@ -28,7 +28,10 @@ require('datetimepicker/dist/DateTimePicker.css');
 window.dropzone = require('dropzone');
 require('toastr/build/toastr.min.css');
 window.toastr = require('toastr');
-window.slugify = require('slugify');
+
+
+import { slugify } from 'transliteration';
+window.slugify = slugify;
 
 window.Vue = require('vue');
 
