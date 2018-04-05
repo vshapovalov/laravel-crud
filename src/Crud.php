@@ -384,11 +384,17 @@ class Crud {
 			array_map( function ($val) {return $val['validation']; }, $validatingFields)
 		);
 
+		$fieldsCaptions = array_pluck($validatingFields, 'caption', 'name');
+
+		debug($fieldsCaptions);
+
 		if (count($validationRules)) {
 
-			$validator = Validator::make($inputValues, $validationRules);
+			$validator = Validator::make($inputValues, $validationRules, [], $fieldsCaptions);
 
 			if ($validator->fails()){
+
+			    debug($validator->errors()->all());
 
 				return $validator->errors();
 			}
