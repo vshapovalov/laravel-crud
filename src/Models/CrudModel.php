@@ -7,6 +7,5 @@ use Vshapovalov\Crud\RelationshipsTrait;
 
 class CrudModel extends Model
 {
-	use RelationshipsTrait;
 
 }

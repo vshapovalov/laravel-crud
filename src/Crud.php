@@ -352,11 +352,10 @@ class Crud {
 
 	function deleteCrudItem($crud, $id){
 		if (is_string($crud))
-			$crud = $this->getCrudByCode($crud);
+            $crud = $this->getCrudByCode($crud);
 
-		if (!isset($crud['type']) || $crud['type'] == 'list') {
-			call_user_func($crud['model']."::whereKey", $id)->delete();
-		}
+        $model = $this->getModelByCrud($crud, $id, false);
+        $model->delete();
 
 		if (isset($crud['type']) && $crud['type'] == 'tree'){
 
@@ -386,15 +385,11 @@ class Crud {
 
 		$fieldsCaptions = array_pluck($validatingFields, 'caption', 'name');
 
-		debug($fieldsCaptions);
-
 		if (count($validationRules)) {
 
 			$validator = Validator::make($inputValues, $validationRules, [], $fieldsCaptions);
 
 			if ($validator->fails()){
-
-			    debug($validator->errors()->all());
 
 				return $validator->errors();
 			}

@@ -27,6 +27,13 @@ class CrudForm extends Model
 		return parent::save( $options );
 	}
 
+    public function delete() {
+
+        cache()->forget('crud.list');
+
+        return parent::delete();
+    }
+
 	function scopes(){
     	return $this->hasMany(CrudScope::class, 'crud_form_id', 'sur_id')->with(['params']);
     }
