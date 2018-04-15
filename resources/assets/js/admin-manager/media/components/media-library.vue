@@ -27,6 +27,14 @@
                                 <a v-if="isPickMode && !isPickFolderMode" :class="{'is-static': pickedItems.length === 0} || !isLibraryAvailable"
                                    class="button is-warning" @click="pickItem">Выбрать</a>
                                 <a v-if="isPickMode" class="button is-danger" @click="closeLibrary">Закрыть</a>
+                                <div class="field is-inline-block">
+                                    <p class="control has-icons-right">
+                                        <input class="input" type="text" placeholder="" v-model.trim="search.value">
+                                        <span class="icon is-small is-right">
+                                            <i class="fa fa-search"></i>
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
                         </div>
                         <div ref="progressgroup" class="panel-block" style="display: none;">
@@ -56,7 +64,7 @@
                                             </td>
                                             <td><span class="is-unselectable">...</span></td>
                                         </tr>
-                                        <tr v-for="item in items" @dblclick.stop.prevent="onOpenItem(item)" @click.stop.prevent="onSelectItem(item)"
+                                        <tr v-for="item in visibleItems" @dblclick.stop.prevent="onOpenItem(item)" @click.stop.prevent="onSelectItem(item)"
                                             :class="[{'is-selected': currentItem && item.basename === currentItem.basename},{ 'notification is-success': item.isSelected}]">
                                             <td>
                                                 <span v-if="item.type === mediaTypes.FOLDER">
@@ -224,12 +232,29 @@
                     onApprove: undefined
                 },
                 baseUrl: '',
-                title: 'Медиа библиотека'
+                title: 'Медиа библиотека',
+                search: {
+                    value: ''
+                }
             }
         },
         computed: {
             mediaTypes(){
                 return MediaTypes;
+            },
+            visibleItems(){
+                console.log(this.search.value);
+
+                if (this.search.value){
+                    return _.filter(this.items, (i)=>{
+                        console.log(_.lowerCase(i).indexOf(this.search.value));
+
+                        return (i.type === MediaTypes.FOLDER ) ||
+                        (i.type === MediaTypes.ITEM && (_.lowerCase(i.basename).indexOf(this.search.value) >= 0 ))
+                    });
+                } else {
+                    return this.items;
+                }
             },
             editStates(){
                 return EditStates;
