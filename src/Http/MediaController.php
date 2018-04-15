@@ -132,6 +132,15 @@ class MediaController extends BaseController
 
 	    $path = 'uploads';
 
+        $type = $request->get('source', 'both');
+        $savePath  = $request->get('save_path', true);
+
+        debug('$type');
+        debug($type);
+
+        debug('$savePath');
+        debug($savePath);
+
 	    if (($parentDir = $request->input('path', false)) && is_string($parentDir) &&
 
 	        Storage::disk('public')->exists($parentDir)){
@@ -140,29 +149,58 @@ class MediaController extends BaseController
 
 	    }
 
-	    if ($path) {
+	    if ($savePath && $path ) {
 		    Session::put('media.path', $path);
 	    }
-		
+
 		setlocale(LC_ALL,'en_US.UTF-8');
-		
-	    return array_merge(array_map(function($f){
 
-			    $pi = pathinfo($f);
-			    $pi['type'] = 'folder';
+        $files = [];
+        $dirs = [];
 
-			    return $pi;
+        if ($type == 'both' || $type == 'file'){
+            $files = array_map(function($f){
 
-		    }, Storage::disk('public')->directories($path)),
+                $pi = pathinfo($f);
+                $pi['type'] = 'file';
 
-	           array_map(function($f){
+                return $pi;
 
-		           $pi = pathinfo($f);
-		           $pi['type'] = 'file';
+            }, Storage::disk('public')->files($path));
+        }
 
-		           return $pi;
+        if ($type == 'both' || $type == 'dir'){
+            $dirs = array_map(function($f){
 
-	           }, Storage::disk('public')->files($path)));
+                $pi = pathinfo($f);
+                $pi['type'] = 'folder';
+
+                return $pi;
+
+            } , Storage::disk('public')->directories($path));
+        }
+
+
+
+	    return array_merge( $dirs, $files);
+    }
+
+    function moveItems(){
+
+        $response = [
+            'status' => 'success'
+        ];
+
+        $items = request()->get('items', []);
+
+        $path = request()->get('path', 'uploads');
+
+        foreach ($items as $item){
+
+            Storage::disk('public')->move($item['dirname'] .'/'. $item['basename'], $path.'/'. $item['basename']);
+        }
+
+        return $response;
     }
 
 	function renameFolder(Request $request){

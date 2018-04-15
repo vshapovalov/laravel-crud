@@ -10,7 +10,7 @@
                         </div>
                         <div class="panel-block">
                             <div class="">
-                                <a ref="upload" class="button is-success" :class="{'is-static': !isLibraryAvailable}">
+                                <a v-show="!isPickFolderMode" ref="upload" class="button is-success" :class="{'is-static': !isLibraryAvailable}">
                                     <div id="uploadPreview" style="display: none">
 
                                     </div>Загрузить</a>
@@ -18,12 +18,13 @@
                                    class="button is-warning" @click="goBack">Назад</a>
                                 <a :class="{'is-static': !isLibraryAvailable}"
                                    class="button is-warning" @click="newFolder">Создать папку</a>
-                                <!--<a :class="{'is-static': items.length == 0}" class="button is-warning" @click="moveItem">Переместить</a>-->
                                 <a :class="{'is-static': !currentItem || !isLibraryAvailable}"
                                    class="button is-warning" @click="renameItem">Переименовать</a>
+                                <a :class="{'is-static': (!currentItem && !isPickFolderMode)|| !isLibraryAvailable}"
+                                   class="button is-warning" @click="moveItem">{{ isPickFolderMode ? 'Переместить сюда' : 'Переместить' }}</a>
                                 <a :class="{'is-static': !currentItem || !isLibraryAvailable}"
                                    class="button is-warning" @click="deleteItem">Удалить</a>
-                                <a v-if="isPickMode" :class="{'is-static': pickedItems.length === 0} || !isLibraryAvailable"
+                                <a v-if="isPickMode && !isPickFolderMode" :class="{'is-static': pickedItems.length === 0} || !isLibraryAvailable"
                                    class="button is-warning" @click="pickItem">Выбрать</a>
                                 <a v-if="isPickMode" class="button is-danger" @click="closeLibrary">Закрыть</a>
                             </div>
@@ -48,6 +49,7 @@
                                             <th data-role="button" @click="selectAll">*</th>
                                             <th>Название</th>
                                         </tr>
+
                                         <tr v-if="pathItems.length > 1 && isLibraryAvailable" @dblclick.stop="goBack">
                                             <td>
                                                 <span><i class="fa fa-arrow-up"></i></span>
@@ -55,7 +57,7 @@
                                             <td><span class="is-unselectable">...</span></td>
                                         </tr>
                                         <tr v-for="item in items" @dblclick.stop.prevent="onOpenItem(item)" @click.stop.prevent="onSelectItem(item)"
-                                            :class="[{'is-selected': currentItem && item.basename === currentItem.basename},{ 'notification is-success': isPickMode && item.isSelected}]">
+                                            :class="[{'is-selected': currentItem && item.basename === currentItem.basename},{ 'notification is-success': item.isSelected}]">
                                             <td>
                                                 <span v-if="item.type === mediaTypes.FOLDER">
                                                     <i class="fa fa-folder"></i>
@@ -114,6 +116,26 @@
                         </div>
                     </div>
 
+                    <div v-if="modalSelectDir.state != editStates.NONE" class="modal is-active">
+                        <div class="modal-background"></div>
+                        <div class="modal-card">
+                            <header class="modal-card-head">
+                                <p class="modal-card-title">{{ modalSelectDir.title }}</p>
+                            </header>
+                            <section class="modal-card-body">
+                                <div class="edit-form">
+
+
+
+                                </div>
+                            </section>
+                            <footer class="modal-card-foot">
+                                <a :class="{'is-static': !editForm.value, 'is-loading': editForm.state === editStates.POSTING }" class="button is-success" @click="submitEditForm">Подтвердить</a>
+                                <a class="button is-danger is-outlined" @click="modalSelectDir.state = editStates.NONE">Отмена</a>
+                            </footer>
+                        </div>
+                    </div>
+
                     <div v-if="modalApprove.state != editStates.NONE" class="modal is-active">
                         <div class="modal-background"></div>
                         <div class="modal-card">
@@ -136,7 +158,6 @@
 
 <script>
 
-    // TODO: move actions
     // TODO: refactor simple modal to component
 
     import MediaTypes from './../utils/types';
@@ -144,12 +165,14 @@
     import FormBehaviorTypes from './../../utils/types';
     import CrudApi from './../../api';
     import CrudUrls from './../../api/urls';
+    import LibraryBuilder from './../builder';
 
 
     let EditStates = {
         NONE: '',
         NEW_FOLDER: 'newfolder',
         RENAME_FOLDER: 'renamefolder',
+        MOVE_ITEM: 'moveitem',
         POSTING: 'posting'
     };
 
@@ -193,6 +216,13 @@
                     state: EditStates.NONE,
                     onApprove: undefined
                 },
+                modalSelectDir:{
+                    title: '',
+                    text: '',
+                    items: [],
+                    state: EditStates.NONE,
+                    onApprove: undefined
+                },
                 baseUrl: '',
                 title: 'Медиа библиотека'
             }
@@ -216,15 +246,23 @@
             isPickMode(){
                 return this.type !== FormBehaviorTypes.BROWSE;
             },
+            isPickFolderMode(){
+                return this.type === FormBehaviorTypes.PICK_FOLDER;
+            },
             pickedItems(){
                 return _.filter(this.items, (i) => i.isSelected);
             },
             pathItems(){
 
+                let joinedPath = '';
+
                 let pathArr = _.map(_.split(this.path, '/'), (item, i, arr)=>{
+
+                    joinedPath += (i > 0 ? '/' : '') + item;
+
                     return {
                         basename: i === 0 ? 'Библиотека' : item,
-                        dirname: (i > 0 ? arr[i-1] + '/' : '') + item
+                        dirname: joinedPath
                     }
                 });
 
@@ -313,6 +351,36 @@
                     this.editForm.state = EditStates.RENAME_FOLDER;
                 }
             },
+            moveItem(){
+                if (!this.isLibraryAvailable)
+                    return;
+
+                if (this.isPickFolderMode){
+
+                    this.$emit("pick", this.path);
+
+                } else {
+                    new LibraryBuilder(FormBehaviorTypes.PICK_FOLDER)
+                        .setCrudField(this.field)
+                        .onPick((path)=>{
+
+                            CrudApi.mediaItemsMove({
+                                items: this.pickedItems,
+                                path: path
+                            })
+                                .then(()=>{
+                                    this.getItems();
+                                    toastr.success('Успешно перемещено');
+                                }).catch((error)=>{
+
+                                toastr.error(error);
+                            });
+                        })
+                        .build()
+                        .show();
+                }
+            },
+
             submitEditForm(){
                 if ( _.trim(this.editForm.value)){
                     if (this.editForm.state === EditStates.NEW_FOLDER){
@@ -387,7 +455,7 @@
                     this.getItems();
                 }
 
-                if (item.type === MediaTypes.ITEM && (this.type === FormBehaviorTypes.PICK)){
+                if (item.type === MediaTypes.ITEM && ((this.type === FormBehaviorTypes.PICK))){
                     this.onSelectItem(item);
                     this.pickItem();
                 }
@@ -396,8 +464,7 @@
                 if (!this.isLibraryAvailable)
                     return;
 
-                if (this.isPickMode && (item.type === MediaTypes.ITEM)){
-
+                if (item.type === MediaTypes.ITEM){
                     if (this.type === FormBehaviorTypes.PICK){
                         _.map(this.items, (i)=> {
                             if (i.basename !== item.basename)
@@ -406,9 +473,9 @@
                     }
 
                     this.$set(item, 'isSelected', !item.isSelected);
-                }
 
-                this.currentItem = item;
+                    this.currentItem = item;
+                }
             },
 
             goBack(){
@@ -432,10 +499,16 @@
             /******************************** end common  library actions *********************************/
 
 
-            getItems(){
+            getItems(source = 'both', save_path = true ){
                 this.libraryState = LibraryStates.LOADING;
                 this.items = [];
-                CrudApi.mediaGetItems(this.path)
+
+                if (this.isPickFolderMode) {
+                    source = 'dir';
+                    save_path = false;
+                }
+
+                CrudApi.mediaGetItems({ path: this.path, source: source, save_path: save_path})
                     .then((response)=>{
                         this.libraryState = LibraryStates.BROWSE;
                         this.items = response.data;

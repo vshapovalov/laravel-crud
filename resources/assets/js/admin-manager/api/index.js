@@ -56,8 +56,12 @@ export default class CrudApi {
     static mediaItemsDelete(data){
         return axios.post(apiUrls.media.ITEMS_DELETE, data);
     }
-    static mediaGetItems(path){
-        return axios.post(apiUrls.media.GET_ITEMS, { path: path});
+    static mediaGetItems(params){
+        return axios.post(apiUrls.media.GET_ITEMS, params);
+    }
+
+    static mediaItemsMove(params){
+        return axios.post(apiUrls.media.MOVE_ITEMS, params);
     }
 
 }

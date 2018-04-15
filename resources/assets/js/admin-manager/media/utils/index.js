@@ -2,7 +2,7 @@ import Images from './image-ext';
 
 export default class MediaUtils{
     static isImage(fileName){
-        return !!_.some(Images, (i)=>_.endsWith(fileName, i));
+        return !!_.some(Images, (i)=>_.endsWith(fileName.toLowerCase() , i));
     }
 
     static isImageByExt(ext){

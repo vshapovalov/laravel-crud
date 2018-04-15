@@ -18,5 +18,6 @@ export default {
         ITEMS_DELETE: baseUrl + '/' + mediaPrefix + '/items/delete',
         GET_ITEMS: baseUrl + '/' + mediaPrefix + '/items',
         UPLOAD: baseUrl + '/' + mediaPrefix + '/upload',
+        MOVE_ITEMS: baseUrl + '/' + mediaPrefix + '/items/move'
     }
 };

@@ -139,8 +139,6 @@
 
                 if (this.mode === "multi") formBehavior = FormBehaviorTypes.PICK_MANY;
 
-                console.log(this.field);
-
                 new LibraryBuilder(formBehavior)
                     .setCrudField(this.field)
                     .onPick(this.onPick)

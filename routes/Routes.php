@@ -7,6 +7,7 @@ Route::group(['as' => 'media.', 'prefix' => config('cruds.media_prefix')], funct
 	Route::post('upload', ['as' => 'upload', 'uses' => $namespacePrefix.'MediaController@putMedia']);
 	Route::post('items', ['as' => 'items', 'uses' => $namespacePrefix.'MediaController@getItems']);
 	Route::post('items/delete', ['as' => 'delete', 'uses' => $namespacePrefix.'MediaController@deleteItem']);
+    Route::post('items/move', ['as' => 'move', 'uses' => $namespacePrefix.'MediaController@moveItems']);
 	Route::post('folder/new', ['as' => 'newfolder', 'uses' => $namespacePrefix.'MediaController@newFolder']);
 	Route::post('folder/rename', ['as' => 'renamefolder', 'uses' => $namespacePrefix.'MediaController@renameFolder']);
 });
