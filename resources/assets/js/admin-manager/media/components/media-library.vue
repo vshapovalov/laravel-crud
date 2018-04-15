@@ -243,11 +243,9 @@
                 return MediaTypes;
             },
             visibleItems(){
-                console.log(this.search.value);
 
                 if (this.search.value){
                     return _.filter(this.items, (i)=>{
-                        console.log(_.lowerCase(i).indexOf(this.search.value));
 
                         return (i.type === MediaTypes.FOLDER ) ||
                         (i.type === MediaTypes.ITEM && (_.lowerCase(i.basename).indexOf(this.search.value) >= 0 ))
@@ -275,7 +273,11 @@
                 return this.type === FormBehaviorTypes.PICK_FOLDER;
             },
             pickedItems(){
-                return _.filter(this.items, (i) => i.isSelected);
+
+                return _.filter(this.items, (i) => {
+                    return (i.type === MediaTypes.ITEM) && i.isSelected
+                });
+
             },
             pathItems(){
 
@@ -302,7 +304,7 @@
             /******************************** behavior *********************************/
 
             pickItem(){
-                let selectedItems = _.map(_.filter(this.items, (i) => i.isSelected), (i)=>this.storagePath(i));
+                let selectedItems = _.map(this.pickedItems, (i)=>this.storagePath(i));
                 this.$emit("pick", selectedItems);
             },
 
@@ -496,11 +498,11 @@
                                 this.$set(i, 'isSelected', false);
                         });
                     }
-
-                    this.$set(item, 'isSelected', !item.isSelected);
-
-                    this.currentItem = item;
                 }
+
+                this.$set(item, 'isSelected', !item.isSelected);
+
+                this.currentItem = item;
             },
 
             goBack(){
