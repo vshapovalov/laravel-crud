@@ -11,7 +11,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Styles -->
-    <link href="{{ url('vendor/vshapovalov/crud/assets/css/admin.css') }}" rel="stylesheet">
+    <link href="{{ url('vendor/vshapovalov/crud/assets/css/admin.css?128') }}" rel="stylesheet">
 
     @yield('styles')
 </head>
@@ -27,7 +27,7 @@
         window.uploadPath = "{{ '/storage' }}";
     </script>
 
-    <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js') }}"></script>
+    <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js?128') }}"></script>
 @show
 </body>
 </html>
