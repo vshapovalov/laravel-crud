@@ -13,7 +13,11 @@ class CrudRelation extends Model
 	}
 
 	function pivot(){
-		return $this->hasMany(CrudField::class, 'crud_relation_id')->whereNull('crud_form_id');
+		return $this
+            ->hasMany(CrudField::class, 'crud_relation_id')
+            ->orderBy('order')
+            ->orderBy('name')
+            ->whereNull('crud_form_id');
 	}
 
 }

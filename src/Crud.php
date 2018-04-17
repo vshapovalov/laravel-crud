@@ -210,7 +210,7 @@ class Crud {
 
 				array_filter( $crud['fields'], function($f){
 					return $f['type'] == 'relation'
-					       && ( !isset($f['json']) || (isset($f['json']) && !$f['json']))
+					       && ( !$f['json'] )
 					       && ( in_array('edit', $f['visibility']) || count($f['visibility']) == 0);
 				})
 			);
@@ -308,7 +308,7 @@ class Crud {
 
 			array_filter( $crud['fields'], function($f){
 				return $f['type'] == 'relation'
-				       && ( !isset($f['json']) || (isset($f['json']) && !$f['json']))
+				       && ( !$f['json'] )
 				       && ( in_array('browse', $f['visibility']) || count($f['visibility']) == 0);
 			})
 		);
@@ -400,18 +400,20 @@ class Crud {
 
 	function checkAccess($crudCode, $checkAction){
 
-		return crud_roles()->filter(function ($role, $key) use ($crudCode, $checkAction){
-			 if ($role->users->first(function ($user, $key) {
+		return crud_roles()->first(function ($role, $key) use ($crudCode, $checkAction){
+
+		    if ($role->users->first(function ($user, $key) {
 					return $user->id == Auth::user()->id;
 				})) {
 
 			 	return $role->forms->first(function ($form, $key) use ($crudCode, $checkAction){
+
 				    return ($form->code == $crudCode) && $form->pivot->{$checkAction};
 			    });
 			 }
 
 			 return false;
-		})->count();
+		});
 	}
 
 	function saveCrudItem($crud, $inputValues){
@@ -536,16 +538,13 @@ class Crud {
 				continue;
 			}
 
-			if ( $field['type'] == 'relation' && isset($field['json']) && $field['json'] ) {
+			if ( ($field['type'] == 'relation') && $field['json'] ) {
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 			}
 
-			if (
-				$field['type'] == 'relation' &&
-				( !isset($field['json'] ) || ( isset($field['json']) && !$field['json'] ) )
-			){
+			if ( ($field['type'] == 'relation') && !$field['json'] ){
 
 				$crudField = null;
 
@@ -621,12 +620,13 @@ class Crud {
 
 						// extract json root fields names
 						$jsonPivotRootFields = [];
+
 						if (isset($field['relation']['pivot']) && count($field['relation']['pivot'])){
 
 							array_walk($field['relation']['pivot'], function($val, $key)use(&$jsonPivotRootFields){
 								if (isset($val['json']) && $val['json']) {
 
-									$jsonPivotRootFields[ explode('->', $val['name'])[0] ] = '{}';
+									$jsonPivotRootFields[ explode('->', $val['name'])[0] ] = '[]';
 								}
 							});
 						}
@@ -635,32 +635,39 @@ class Crud {
 
 							if ( isset( $field['relation']['pivot'] ) && count($field['relation']['pivot']) ) {
 
-								$pivotValues = [];
-								$jsonPivotNonJsonFields = [];
+                                $pivotValues = [];
 
-								forEach ( $field['relation']['pivot'] as $pivotField ) {
-									if (isset($crudRelatedItem['pivot'][ $pivotField['name'] ])) {
-										$pivotValues[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
+                                forEach (array_sort($field['relation']['pivot'], 'json') as $pivotField) {
 
-										if (count($jsonPivotRootFields) && (!isset($pivotField['json']) || (isset($pivotField['json']) && !$pivotField['json']) )){
-											$jsonPivotNonJsonFields[ $pivotField['name'] ] = $crudRelatedItem['pivot'][ $pivotField['name'] ];
-										}
-									}
-								}
+                                    if (isset($crudRelatedItem['pivot'][$pivotField['name']])) {
 
-								if (count($jsonPivotRootFields)) {
-									$relatedItemExists = $item->{$field['name']}->contains(function($val, $key) use ($relationCrud, $crudRelatedItem){
-										return $val->{$relationCrud['id']} == $crudRelatedItem[ $relationCrud['id'] ];
-									});
 
-									if (!$relatedItemExists) {
+                                        if (!$pivotField['json']) {
+                                            $pivotValues[$pivotField['name']] = $crudRelatedItem['pivot'][$pivotField['name']];
+                                        } else {
 
-										$item->{$field['name']}()->attach($crudRelatedItem[ $relationCrud['id'] ], array_merge($jsonPivotNonJsonFields, $jsonPivotRootFields));
-									}
-								}
+                                            $jsonFieldPath = explode('->', $pivotField['name']);
 
-								$relationIds[ $crudRelatedItem[ $relationCrud['id'] ] ] = $pivotValues;
-							} else {
+                                            $jsonFieldRoot = $jsonFieldPath[0];
+
+                                            unset($jsonFieldPath[0]);
+
+                                            $jsonFieldPath = implode('.', $jsonFieldPath);
+
+                                            array_set($pivotValues[$jsonFieldRoot], $jsonFieldPath, $crudRelatedItem['pivot'][$pivotField['name']]);
+                                        }
+                                    }
+                                }
+
+                                if (count($jsonPivotRootFields)) {
+
+                                    foreach ($jsonPivotRootFields as $jsonPivotRootField => $jsonPivotRootFieldValue) {
+                                        $pivotValues[$jsonPivotRootField] = (isset($pivotValues[$jsonPivotRootField]) ? json_encode($pivotValues[$jsonPivotRootField]) : $jsonPivotRootFieldValue);
+                                    }
+                                }
+
+                                $relationIds[$crudRelatedItem[$relationCrud['id']]] = $pivotValues;
+                            } else {
 								$relationIds[] = $crudRelatedItem[ $relationCrud['id'] ];
 							}
 						}
