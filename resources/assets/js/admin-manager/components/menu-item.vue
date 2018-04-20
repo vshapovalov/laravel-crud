@@ -3,7 +3,7 @@
         <a @click.stop.prevent="onClick">{{ item.caption }}</a>
         <transition name="slide">
             <div v-show="opened" class="nested-items">
-                <menu-item :key="nestedItem.id" v-for="nestedItem in item.items" :item="nestedItem" @selected="onSelected"></menu-item>
+                <menu-item :key="nestedItem.id" v-for="nestedItem in sortedMenu" :item="nestedItem" @selected="onSelected"></menu-item>
             </div>
         </transition>
     </div>
@@ -18,7 +18,11 @@
                 opened: false
             }
         },
-        computed: {},
+        computed: {
+            sortedMenu(){
+                return _.sortBy(this.item.items, ['order', 'caption']);
+            }
+        },
         methods: {
             onClick(){
                 if (this.item.action){

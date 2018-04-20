@@ -14,7 +14,7 @@
                     </div>
                 </div>
                 <div class="menu-container">
-                    <menu-item :key="menuItem.id" v-for="menuItem in menu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
+                    <menu-item :key="menuItem.id" v-for="menuItem in sortedMenu" @selected="emitMenuAction" :item="menuItem" ></menu-item>
                 </div>
             </div>
             <div id="workspace" class="content"></div>
@@ -54,6 +54,9 @@
           },
           xsrfToken(){
               return CSRF_TOKEN;
+          },
+          sortedMenu(){
+              return _.sortBy(this.menu, ['order', 'caption']);
           }
         },
         methods:{

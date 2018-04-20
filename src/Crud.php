@@ -276,23 +276,26 @@ class Crud {
 		}
 	}
 
+	function renderMenu($code, $viewName = null){
+
+        if (!$this->menuItems) $this->loadMenuItems();
+
+        $menu = array_first($this->menuItems, function($value) use ($code){
+            return (is_string($code) ? ($value->code == $code) : ($value->id == $code));
+        });
+
+        return view($viewName ? $viewName : 'crud::menu', ['menuItem' => $menu])->render();
+    }
+
 	function menu($code, $viewName = null){
 
-		return Cache::remember('menu.'.$code, 1440, function() use ($viewName, $code){
-			if (!$this->menuItems) $this->loadMenuItems();
-
-			if (is_string($code)){
-				$searchField = 'code';
-			} else {
-				$searchField = 'id';
-			}
-
-			$menu = array_first($this->menuItems, function($value) use ($code, $searchField){
-				return $value->{$searchField} == $code;
-			});
-
-			return view($viewName ? $viewName : 'crud::menu', ['menuItem' => $menu])->render();
-		});
+        if (is_string($code)){
+            return Cache::remember('menu.'.$code, 1440, function() use ($viewName, $code){
+                return $this->renderMenu($code, $viewName);
+            });
+        } else {
+            return $this->renderMenu($code, $viewName);
+        }
 	}
 
 	function getCrudItemsList($crud, $inputItem, $sortOptions){
