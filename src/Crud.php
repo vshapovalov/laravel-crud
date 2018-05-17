@@ -43,12 +43,13 @@ class Crud {
 
 	function loadSettings(){
 
-		$this->settings = AdminSetting::with('adminSettingGroup')->get()->toArray();
-
+		$this->settings = AdminSetting::with('adminSettingGroup' )->get()->toArray();
 	}
 
 	function loadMenuItems() {
-		$this->menuItems = MenuItem::with( 'children' )->get();
+		$this->menuItems = MenuItem::with( ['children' => function($q){
+            return $q->orderBy('order');
+        }])->orderBy('order')->get();
 	}
 
 	function setDefaultValues($cruds){
