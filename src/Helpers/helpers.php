@@ -2,9 +2,9 @@
 
 if(!function_exists('crud_menu')){
 
-	function crud_menu($code){
+	function crud_menu($code, $viewName = null){
 
-		return Crud::menu($code);
+		return Crud::menu($code, $viewName);
 	}
 }
 

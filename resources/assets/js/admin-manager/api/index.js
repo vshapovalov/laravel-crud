@@ -64,5 +64,9 @@ export default class CrudApi {
         return axios.post(apiUrls.media.MOVE_ITEMS, params);
     }
 
+    static mediaItemCrop(params){
+        return axios.post(apiUrls.media.CROP, params);
+    }
+
 }
 

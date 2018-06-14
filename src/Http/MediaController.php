@@ -21,6 +21,83 @@ class MediaController extends BaseController
 		$this->middleware('auth');
 	}
 
+	function processImage($image, $options){
+
+        $width = $image->getWidth();
+
+        $quality = null;
+
+        if (isset($options['resize'])){
+
+            $quality = isset($options['resize']['quality']) ? $options['resize']['quality'] : $quality;
+
+            if (isset($options['resize']['width']) || isset($options['resize']['height'])){
+                $image->resize(
+                    isset($options['resize']['width']) ? $options['resize']['width'] : null,
+                    isset($options['resize']['height']) ? $options['resize']['height'] : null,
+                    function($constraint){
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    }
+                )->encode(null, $quality);
+            }
+        }
+
+        if (isset($options['scale'])){
+
+            $image->resize(
+                round($width * ($options['scale'] / 100)),
+                null,
+                function($constraint){
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                }
+            );
+        }
+
+        if (isset($options['crop'])){
+
+            if (!isset($options['crop']['x'])) $options['crop']['x'] = null;
+            if (!isset($options['crop']['y'])) $options['crop']['y'] = null;
+
+            $image->crop(
+                $options['crop']['width'],
+                $options['crop']['height'],
+                $options['crop']['x'],
+                $options['crop']['y']
+            );
+        }
+
+        if (isset($options['fit'])){
+
+//						    	position
+//							    top-left, top, top-right, left, center (default), right, bottom-left,
+//								bottom, bottom-right
+
+            $image->fit($options['fit']['width'], $options['fit']['height'], function ($constraint) {
+                $constraint->upsize();
+            }, isset($options['fit']['position'])? $options['fit']['position'] : 'center');
+
+        }
+
+    }
+
+    function cropImage(){
+
+        if (($item = request('item', false)) && request()->has('crop_data')) {
+
+            $image = Image::make(
+                Storage::disk('public')->get($item['dirname'] .'/'. $item['basename'])
+            );
+
+            $this->processImage($image, [ 'crop' => request('crop_data') ] );
+
+            Storage::disk('public')->update($item['dirname'] .'/'. $item['basename'], $image->stream());
+
+            $image->destroy();
+        }
+    }
+
 	function putMedia(request $request){
 
 		$parentFolder = $request->input('path', 'uploads');
@@ -42,35 +119,24 @@ class MediaController extends BaseController
 
 			$ext = pathinfo($fullFileName, PATHINFO_EXTENSION);
 
+			if (request()->has('crop_data')){
+			    //cropper.js data
+                $this->settings['crop'] = json_decode(request('crop_data'), true);
+            }
+
+
 			if (in_array($ext, $this->fileTypes) && count($this->settings)){
 
 				$image = Image::make($file);
 
-				$image->backup();
+                $this->processImage($image, $this->settings);
 
-				$quality = null;
-
-				if (isset($this->settings['resize'])){
-
-					$quality = isset($this->settings['resize']['quality']) ? $this->settings['resize']['quality'] : $quality;
-
-					if (isset($this->settings['resize']['width']) || isset($this->settings['resize']['height'])){
-						$image->resize(
-							isset($this->settings['resize']['width']) ? $this->settings['resize']['width'] : null,
-							isset($this->settings['resize']['height']) ? $this->settings['resize']['height'] : null,
-							function($constraint){
-								$constraint->aspectRatio();
-								$constraint->upsize();
-							}
-						)->encode($ext, $quality);
-					}
-
-					$image->backup();
-				}
+                $image->backup();
 
 				Storage::disk('public')->put($parentFolder . '/' . $fullFileName, $image->stream());
 
 				if (isset($this->settings['thumbnails'])){
+
 					foreach ($this->settings['thumbnails'] as $thumb){
 
 						$image->reset();
@@ -78,39 +144,7 @@ class MediaController extends BaseController
 						$thumbFilename = substr($fullFileName, 0, strrpos($fullFileName, '.'.$ext))
 						                 . '-'.$thumb['name'] . '.' . $ext;
 
-						$width = $image->getWidth();
-
-						if (isset($thumb['scale'])){
-
-							$image->resize(
-								round($width * ($thumb['scale'] / 100)),
-								null,
-								function($constraint){
-									$constraint->aspectRatio();
-									$constraint->upsize();
-								}
-							);
-						}
-
-						if (isset($thumb['crop'])){
-
-							$image->crop(
-								$thumb['crop']['width'],
-								$thumb['crop']['height']
-							);
-						}
-
-						if (isset($thumb['fit'])){
-
-//						    	position
-//							    top-left, top, top-right, left, center (default), right, bottom-left,
-//								bottom, bottom-right
-
-							$image->fit($thumb['fit']['width'], $thumb['fit']['height'], function ($constraint) {
-								$constraint->upsize();
-							}, isset($thumb['fit']['position'])? $thumb['fit']['position'] : 'center');
-
-						}
+						$this->processImage($image ,$thumb);
 
 						Storage::disk('public')->put($parentFolder . '/' . $thumbFilename, $image->stream());
 
@@ -134,12 +168,6 @@ class MediaController extends BaseController
 
         $type = $request->get('source', 'both');
         $savePath  = $request->get('save_path', true);
-
-        debug('$type');
-        debug($type);
-
-        debug('$savePath');
-        debug($savePath);
 
 	    if (($parentDir = $request->input('path', false)) && is_string($parentDir) &&
 

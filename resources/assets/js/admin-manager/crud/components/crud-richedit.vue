@@ -46,12 +46,11 @@
         },
         mounted() {
             tinymce.init({
-                content_css: '/css/vendors/tinymce.css',
                 menubar: false,
                 target: this.$refs.tiny,
                 min_height: 600,
                 resize: 'vertical',
-                plugins: 'link, lists, image, code, youtube, giphy, table, textcolor, fullscreen, advlist, colorpicker, contextmenu',
+                plugins: 'link, lists, image, code, youtube, giphy, table, textcolor, fullscreen, advlist, colorpicker, contextmenu, paste, visualblocks',
                 extended_valid_elements : 'input[id|name|value|type|class|style|required|placeholder|autocomplete|onclick]',
                 file_browser_callback: function(field_name, url, type, win) {
 
@@ -59,7 +58,8 @@
                         $('#upload_file').trigger('click');
                     }
                 },
-                toolbar: 'styleselect bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist outdent indent | link image table youtube giphy | code',
+                toolbar: 'styleselect bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist outdent indent | link image table youtube giphy | visualblocks | code | fullscreen',
+                visualblocks_default_state: true,
                 convert_urls: false,
                 image_caption: true,
                 image_title: true,

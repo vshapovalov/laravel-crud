@@ -23,11 +23,6 @@ class CreateRoleCrudFormTable extends Migration
 
 	        $table->integer('crud_form_id')->unsigned();
 
-	        $table->foreign('crud_form_id', 'role_crud_form_crud_form_id_foreign')
-	              ->references('sur_id')
-	              ->on('crud_forms')
-	              ->onDelete('cascade');
-
 	        $table->integer('add')->default(1);
 	        $table->integer('edit')->default(1);
 	        $table->integer('delete')->default(1);

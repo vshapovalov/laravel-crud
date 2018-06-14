@@ -10,6 +10,8 @@ Route::group(['as' => 'media.', 'prefix' => config('cruds.media_prefix')], funct
     Route::post('items/move', ['as' => 'move', 'uses' => $namespacePrefix.'MediaController@moveItems']);
 	Route::post('folder/new', ['as' => 'newfolder', 'uses' => $namespacePrefix.'MediaController@newFolder']);
 	Route::post('folder/rename', ['as' => 'renamefolder', 'uses' => $namespacePrefix.'MediaController@renameFolder']);
+    Route::post('crop', ['as' => 'crop', 'uses' => $namespacePrefix.'MediaController@cropImage']);
+
 });
 
 Route::group(['namespace' => '\\Vshapovalov\\Crud\\Http\\Controllers', 'as' => 'cruds.', 'prefix' => config('cruds.crud_prefix')], function(){
