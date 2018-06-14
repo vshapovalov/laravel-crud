@@ -27,7 +27,7 @@
         window.uploadPath = "{{ '/storage' }}";
     </script>
 
-    <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js?129') }}"></script>
+    <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js?136') }}"></script>
 @show
 </body>
 </html>
