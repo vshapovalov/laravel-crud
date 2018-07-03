@@ -1,11 +1,11 @@
 <template>
-    <p class="caption-wrapper">
+    <span class="caption-wrapper">
         <span v-if="fieldType === fieldTypes.TEXTBOX">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.TEXTAREA">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.DATEPICKER">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.RICHEDIT">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.COLORBOX" :style="{'background-color': fieldValue}" class="tag">{{ fieldValue }}</span>
-        <span v-else-if="fieldType === fieldTypes.CHECKBOX ">{{ (fieldValue && (fieldValue !==0) && (fieldValue !== "0")) ? "Да" : "Нет" }}</span>
+        <span v-else-if="fieldType === fieldTypes.CHECKBOX ">{{ (fieldValue && (fieldValue != 0)) ? "Да" : "Нет" }}</span>
         <span v-else-if="fieldType === fieldTypes.DROPDOWN">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO || field.relation.type === relationTypes.HAS_ONE)">
             {{ !field.json ? ( item[field.name] ? getDisplayValue(getCrud(field.relation.crud.code)['display'], item[field.name]) : '') : item[field.name] }}
@@ -18,17 +18,17 @@
         </span>
         <span v-else-if="fieldType === fieldTypes.IMAGE">
             <span v-if="!field.additional || (field.additional && field.additional.mode === 'single')">
-                <span class="image is-64x64">
-                    <img :src="baseUrl + '/' + fieldValue" alt="">
-                </span>
+                <v-avatar :src="baseUrl + '/' + fieldValue"></v-avatar>
             </span>
             <span v-if="field.additional && (field.additional.mode === 'multi')">
-                <span v-for="image in getImages(fieldValue)" class="image is-48x48 is-inline-block">
-                    <img :src="image" alt="">
-                </span>
+                <v-avatar
+                        :key="image"
+                        v-for="image in getImages(fieldValue)"
+                        :src="baseUrl + '/' + fieldValue"
+                ></v-avatar>
             </span>
         </span>
-    </p>
+    </span>
 </template>
 
 <script>
@@ -55,7 +55,7 @@
         },
         computed: {
             baseUrl(){
-                return baseUrl;
+                return App.baseUrl;
             },
             fieldType(){
                 let result = '';
@@ -155,9 +155,6 @@
 
                 return this.relatedCrud;
             }
-        },
-        mounted() {
-
         }
     }
 </script>

@@ -1,9 +1,9 @@
 export default {
     config: 'config',
     crud: {
-        BASE: baseUrl + '/' + crudPrefix + '/',
+        BASE: App.baseUrl + '/' + App.crudPrefix + '/',
         LIST: 'list',
-        TREE_MOVE: '/tree/move',
+        BULK_UPDATE: '/bulk/update',
         SAVE_ITEM: '/edit',
         DELETE_ITEM: '/delete/',
         GET_ITEMS: '/items',
@@ -12,13 +12,13 @@ export default {
         LIST: 'menu/list'
     },
     media: {
-        BASE: baseUrl + '/' + mediaPrefix + '/',
-        FOLDER_NEW: baseUrl + '/' + mediaPrefix + '/folder/new',
-        FOLDER_RENAME: baseUrl + '/' + mediaPrefix + '/folder/rename',
-        ITEMS_DELETE: baseUrl + '/' + mediaPrefix + '/items/delete',
-        GET_ITEMS: baseUrl + '/' + mediaPrefix + '/items',
-        UPLOAD: baseUrl + '/' + mediaPrefix + '/upload',
-        MOVE_ITEMS: baseUrl + '/' + mediaPrefix + '/items/move',
-        CROP: baseUrl + '/' + mediaPrefix + '/crop'
+        BASE: App.baseUrl + '/' + App.mediaPrefix + '/',
+        FOLDER_NEW: App.baseUrl + '/' + App.mediaPrefix + '/folder/new',
+        FOLDER_RENAME: App.baseUrl + '/' + App.mediaPrefix + '/folder/rename',
+        ITEMS_DELETE: App.baseUrl + '/' + App.mediaPrefix + '/items/delete',
+        GET_ITEMS: App.baseUrl + '/' + App.mediaPrefix + '/items',
+        UPLOAD: App.baseUrl + '/' + App.mediaPrefix + '/upload',
+        MOVE_ITEMS: App.baseUrl + '/' + App.mediaPrefix + '/items/move',
+        CROP: App.baseUrl + '/' + App.mediaPrefix + '/crop'
     }
 };

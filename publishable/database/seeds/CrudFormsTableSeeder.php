@@ -24,7 +24,7 @@ class CrudFormsTableSeeder extends Seeder
 	    $user = new \App\User();
 	    $user->name = 'admin';
 	    $user->email = 'admin@admin.com';
-	    $user->password = '$2y$10$yXXgm2NZ5pEIFRl6U5C4sOiamvuMv6pC/5R/Cadr3Rr.UoYtxM.Q2';
+	    $user->password = bcrypt('password');
 	    $user->save();
 
 	    DB::table('user_role')->insert(['role_id' => $role->id, 'user_id' => $user->id]);
@@ -194,6 +194,22 @@ class CrudFormsTableSeeder extends Seeder
 	    $relationCrudFormForRoles->save();
 
 	    $relationCrudFormForRoles->pivot()->createMany([
+            [
+                'name' => 'select',
+                'caption' => 'Чтение',
+                'type' => 'checkbox',
+                'visibility' => '[ "browse", "edit", "add" ]',
+                'by_default' => 1,
+                'json' => 0,
+                'readonly' => 0,
+                'description' => null,
+                'tab' => 'Основные параметры',
+                'validation' => 'required',
+                'additional' => null,
+                'crud_relation_id' => null,
+                'order' => 1,
+                'columns' => 6
+            ],
 		    [
 			    'name' => 'add',
 			    'caption' => 'Добавление',
@@ -207,7 +223,7 @@ class CrudFormsTableSeeder extends Seeder
 			    'validation' => 'required',
 			    'additional' => null,
 			    'crud_relation_id' => null,
-			    'order' => 1,
+			    'order' => 2,
 			    'columns' => 6
 		    ],
 		    [
@@ -223,7 +239,7 @@ class CrudFormsTableSeeder extends Seeder
 			    'validation' => null,
 			    'additional' => null,
 			    'crud_relation_id' => null,
-			    'order' => 2,
+			    'order' => 3,
 			    'columns' => 6
 		    ],
 		    [
@@ -239,7 +255,7 @@ class CrudFormsTableSeeder extends Seeder
 			    'validation' => 'required',
 			    'additional' => null,
 			    'crud_relation_id' => null,
-			    'order' => 3,
+			    'order' => 4,
 			    'columns' => 6
 		    ]
 	    ]);
@@ -602,7 +618,7 @@ class CrudFormsTableSeeder extends Seeder
 				    'description' => null,
 				    'tab' => 'Основные параметры',
 				    'validation' => 'required',
-				    'additional' => '{ "mode":"multi","values": [ {"key":"browse", "value": "browse"}, {"key":"add", "value": "add"}, {"key":"edit", "value": "edit"} ]}',
+				    'additional' => '{ "mode":"multi","values": [ {"key":"browse", "value": "browse"}, {"key":"add", "value": "add"}, {"key":"edit", "value": "edit"}, {"key":"hidden", "value": "hidden"} ]}',
 				    'crud_relation_id' => null,
 				    'order' => 5,
 				    'columns' => 6
@@ -842,6 +858,22 @@ class CrudFormsTableSeeder extends Seeder
 					'order' => 2,
 					'columns' => 6
 				],
+                [
+                    'name' => 'icon',
+                    'caption' => 'icon',
+                    'type' => 'textbox',
+                    'visibility' => '[ "edit", "add" ]',
+                    'by_default' => 'arrow_right',
+                    'json' => 0,
+                    'readonly' => 0,
+                    'description' => null,
+                    'tab' => 'Основные параметры',
+                    'validation' => 'required',
+                    'additional' => null,
+                    'crud_relation_id' => null,
+                    'order' => 3,
+                    'columns' => 6
+                ],
 				[
 					'name' => 'action',
 					'caption' => 'action',
@@ -855,7 +887,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => null,
 					'additional' => null,
 					'crud_relation_id' => null,
-					'order' => 3,
+					'order' => 4,
 					'columns' => 6
 				],
 				[
@@ -871,7 +903,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => 'required',
 					'additional' => '{"mode":"single", "values": [ {"key":"disabled", "value":"disabled"},{"key":"enabled", "value":"enabled"} ]}',
 					'crud_relation_id' => null,
-					'order' => 4,
+					'order' => 5,
 					'columns' => 6
 				],
 				[
@@ -887,7 +919,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => 'required',
 					'additional' => null,
 					'crud_relation_id' => null,
-					'order' => 5,
+					'order' => 6,
 					'columns' => 6
 				],
 				[
@@ -903,7 +935,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => null,
 					'additional' => null,
 					'crud_relation_id' => null,
-					'order' => 6,
+					'order' => 7,
 					'columns' => 6
 				],
 				[
@@ -919,7 +951,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => null,
 					'additional' => null,
 					'crud_relation_id' => $relationCrudMenu->id,
-					'order' => 7,
+					'order' => 8,
 					'columns' => 6
 				]
 			]
@@ -1030,10 +1062,10 @@ class CrudFormsTableSeeder extends Seeder
 					'columns' => 6
 				],
 				[
-					'name' => 'parent',
-					'caption' => 'Главное меню',
-					'type' => 'relation',
-					'visibility' => '[ "browse", "edit", "add" ]',
+					'name' => 'parent_id',
+					'caption' => 'parent_id',
+					'type' => 'textbox',
+					'visibility' => '[ "hidden" ]',
 					'by_default' => null,
 					'json' => 0,
 					'readonly' => 0,
@@ -1041,10 +1073,26 @@ class CrudFormsTableSeeder extends Seeder
 					'tab' => 'Основные параметры',
 					'validation' => null,
 					'additional' => null,
-					'crud_relation_id' => $relationMenuItem->id,
+					'crud_relation_id' => null,
 					'order' => 3,
 					'columns' => 6
 				],
+                [
+                    'name' => 'order',
+                    'caption' => 'order',
+                    'type' => 'textbox',
+                    'visibility' => '[ "hidden" ]',
+                    'by_default' => null,
+                    'json' => 0,
+                    'readonly' => 0,
+                    'description' => null,
+                    'tab' => 'Основные параметры',
+                    'validation' => null,
+                    'additional' => null,
+                    'crud_relation_id' => null,
+                    'order' => 3,
+                    'columns' => 6
+                ],
 				[
 					'name' => 'url',
 					'caption' => 'Ссылка',

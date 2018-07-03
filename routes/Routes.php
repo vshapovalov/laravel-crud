@@ -28,5 +28,5 @@ Route::group(['namespace' => '\\Vshapovalov\\Crud\\Http\\Controllers', 'as' => '
 	Route::get('{code}/{id}', ['uses' => $namespacePrefix.'CrudController@getItem']);
 	Route::post('{code}/edit', ['uses' => $namespacePrefix.'CrudController@updateItem']);
 	Route::post('{code}/delete/{id}', ['uses' => $namespacePrefix.'CrudController@deleteItem']);
-	Route::post('{code}/tree/move', ['uses' => $namespacePrefix.'CrudController@treeUpdateItems']);
+	Route::post('{code}/bulk/update', ['uses' => $namespacePrefix.'CrudController@bulkUpdateItems']);
 });

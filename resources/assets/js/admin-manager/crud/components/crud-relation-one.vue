@@ -1,26 +1,49 @@
 <template>
-    <div class="field has-addons">
-        <div class="control">
-            <input class="input" type="text" placeholder="" :value="relatedName" readonly @dblclick.prevent.stop="openCrud" @click.prevent.stop="showItem">
-        </div>
-        <div class="control">
-            <a class="button is-info" v-show="isButtonVisible('pick')" @click.prevent.stop="openCrud">Выбрать</a>
-        </div>
-        <div class="control">
-            <a class="button is-primary" v-show="isButtonVisible('add')" @click.prevent.stop="addItem">Добавить</a>
-        </div>
-        <div class="control">
-            <a class="button is-warning" v-show="isButtonVisible('edit')" @click.prevent.stop="editItem">Изменить</a>
-        </div>
-        <div class="control">
-            <a class="button is-danger" v-show="isButtonVisible('clear')" @click.prevent.stop="clearItem">Очистить</a>
-        </div>
-    </div>
+    <v-layout row align-center>
+        <v-text-field
+                hide-details
+                class="px-0 py-0"
+                @dblclick="openCrud"
+                readonly
+                :value="relatedName"
+                solo
+        ></v-text-field>
+
+        <v-tooltip v-show="isButtonVisible('pick')" top>
+            <v-btn icon slot="activator" @click="openCrud" class="my-0">
+                <v-icon>search</v-icon>
+            </v-btn>
+            <span>{{ l18n('pick') }}</span>
+        </v-tooltip>
+
+        <v-tooltip v-show="isButtonVisible('add')" top>
+            <v-btn icon  slot="activator" @click="addItem" class="my-0">
+                <v-icon color="success">add</v-icon>
+            </v-btn>
+            <span>{{ l18n('add') }}</span>
+        </v-tooltip>
+
+        <v-tooltip v-show="isButtonVisible('edit')" top>
+            <v-btn icon :disabled="!value" slot="activator" @click="editItem" class="my-0">
+                <v-icon color="accent">edit</v-icon>
+            </v-btn>
+            <span>{{ l18n('edit') }}</span>
+        </v-tooltip>
+
+        <v-tooltip v-show="isButtonVisible('clear')" top>
+            <v-btn icon :disabled="!value" slot="activator" @click="clearItem" class="my-0">
+                <v-icon color="red">clear</v-icon>
+            </v-btn>
+            <span>{{ l18n('clear') }}</span>
+        </v-tooltip>
+    </v-layout>
 </template>
 
 <script>
 
     import CrudBuilder from './../builder';
+    import EditPanel from './../editpanel';
+
     import CrudTypes from './../../utils/types';
     import Utils from './../utils';
 
@@ -47,81 +70,70 @@
             }
         },
         methods: {
-            showItem(){
-                console.log(this.value);
-            },
-
             clearItem(){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
 
-                this.changeItem({});
+                this.changeItem( null );
             },
             isButtonVisible(code){
                 return !this.field.additional || !this.field.additional.buttons || _.find(this.field.additional.buttons, btn=>btn===code);
             },
             changeItem(item){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
-
-                console.log('emit-change', item);
 
                 this.$emit("change", item);
             },
             addItem(){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
-                Bus.$emit('editpanel:mount', this.crud, null , this.changeItem);
+                let component = new EditPanel(this.crud, null, null).build();
+
+                component.options.close = ()=> AdminManager.unmountComponent( component ) ;
+                component.options.save = (item)=> {
+
+                    this.changeItem(item);
+                    AdminManager.unmountComponent( component );
+                } ;
+
+                component.options.isModal = true;
+
+                AdminManager.mountComponent( component, false );
             },
             editItem(){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
-                Bus.$emit('editpanel:mount', this.crud, this.value[this.crud.id] , this.changeItem);
+
+                let component = new EditPanel(this.crud, this.value[this.crud.id], null).build();
+
+                component.options.close = ()=> AdminManager.unmountComponent( component ) ;
+                component.options.save = (item)=> {
+
+                    this.changeItem(item);
+                    AdminManager.unmountComponent( component );
+                } ;
+
+                component.options.isModal = true;
+
+                AdminManager.mountComponent( component, false );
             },
             openCrud(){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
 
-                if (this.crud)
-                {
+                if (this.crud) {
 
-                    console.log('item from rel-one', this.item);
+                    let component = new CrudBuilder( this.crud, CrudTypes.PICK ).build();
 
-                    let crudEditor = new CrudBuilder(this.crud, CrudTypes.PICK)
-                        .onPick((values)=> {
-                            this.changeItem(_.first(values));
-                        })
-                        .onGetItem(()=>this.item)
-                        .build();
+                    component.options.pickItems = (items)=> {
 
-                    crudEditor.show();
+                        this.changeItem(_.first(items));
+                    };
+                    component.options.getItem = ()=> this.item ;
+                    component.options.close = ()=> AdminManager.unmountComponent( component ) ;
+                    component.options.isModal = true;
+
+                    AdminManager.mountComponent( component, false );
 
                 } else {
-                    toastr.error('CRUD форма не определена по коду');
+                    AdminManager.showError( this.l18n('crud_form_not_found') );
                 }
             }
         },
         beforeMount(){
+
             this.crud = AdminManager.getCrud(this.field.relation.crud.code);
-
-        },
-        mounted() {
-
         }
     }
 </script>

@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "bulma": "^0.5.3",
-    "cropperjs": "^1.4.0"
+    "cropperjs": "^1.4.0",
+    "vuetify": "^1.1.0"
   }
 }

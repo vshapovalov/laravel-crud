@@ -1,197 +1,316 @@
 <template>
-    <div v-if="active === true" class="media-library" :class="{modal: isPickMode, 'is-active': isPickMode}" style="z-index: 100000;">
-        <div :class="{'modal-background': isPickMode}"></div>
-        <div :class="{'modal-content' : isPickMode}" >
+    <div class="media-library fill-height"
+         :style="{'z-index': options.isModal ? 100000 : 'inherite'}"
+    >
+        <v-layout column fill-height>
+            <v-flex>
+                <v-toolbar v-if="options.isModal" card flat dense color="primary">
+                    <v-btn icon @click="closeLibrary">
+                        <v-icon>clear</v-icon>
+                    </v-btn>
+                    <v-toolbar-title>{{ title }}</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn v-if="isPickFolderMode" color="success" @click="moveItem">
+                        {{ l18n('move_here') }}
+                    </v-btn>
+                    <v-btn color="success" v-if="isPickMode && !isPickFolderMode"
+                           :disabled="(pickedItems.length === 0) || !isLibraryAvailable" @click="pickItems"
+                    >
+                        {{ l18n('pick') }}
+                    </v-btn>
+                </v-toolbar>
 
-            <div :class="{'container': isPickMode, 'is-fluid': isPickMode}">
-                <div class="panel">
-                        <div class="panel-heading">
-                        <p class="title is-5">{{ title }}</p>
-                    </div>
-                    <div class="panel-block">
-                        <div class="">
-                            <a v-show="!isPickFolderMode" ref="upload" class="button is-success" :class="{'is-static': !isLibraryAvailable}">
-                                <div id="uploadPreview" style="display: none">
+                <h3 v-if="!options.isModal" class="headline">{{ title }}</h3>
 
-                                </div>Загрузить</a>
-                            <a :class="{'is-static': path === root.basename || !isLibraryAvailable}"
-                               class="button is-warning" @click="goBack">Назад</a>
-                            <a :class="{'is-static': !isLibraryAvailable}"
-                               class="button is-warning" @click="newFolder">Создать папку</a>
-                            <a :class="{'is-static': !currentItem || !isLibraryAvailable}"
-                               class="button is-warning" @click="renameItem">Переименовать</a>
-                            <a :class="{'is-static': (!currentItem && !isPickFolderMode)|| !isLibraryAvailable}"
-                               class="button is-warning" @click="moveItem">{{ isPickFolderMode ? 'Переместить сюда' : 'Переместить' }}</a>
-                            <a :class="{'is-static': (!currentItem && !isPickFolderMode)|| !isLibraryAvailable}"
-                               class="button is-warning" @click="cropItem">Обрезать</a>
-                            <a :class="{'is-static': !currentItem || !isLibraryAvailable}"
-                               class="button is-warning" @click="deleteItem">Удалить</a>
-                            <a v-if="isPickMode && !isPickFolderMode" :class="{'is-static': pickedItems.length === 0} || !isLibraryAvailable"
-                               class="button is-warning" @click="pickItem">Выбрать</a>
-                            <a v-if="isPickMode" class="button is-danger" @click="closeLibrary">Закрыть</a>
-                            <div class="field is-inline-block">
-                                <p class="control has-icons-right">
-                                    <input class="input" type="text" placeholder="" v-model.trim="search.value">
-                                    <span class="icon is-small is-right">
-                                        <i class="fa fa-search"></i>
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div ref="progressgroup" class="panel-block" style="display: none;">
-                        <progress ref="progress" class="progress is-primary" :value="progressValue" max="100">{{progressValue}}%</progress>
-                    </div>
-                    <div class="panel-block">
-                        <div class="breadcrumb" >
-                            <ul>
-                                <li v-for="(pathItem, index) in pathItems" @click="goToItem(pathItem)" :class="{'is-active': index == (path.length - 1)}">
-                                    <a>{{ pathItem.basename }}</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="panel-block is-block">
-                        <div class="columns">
-                            <div class="column is-three-quarters">
-                                <table class="table is-fullwidth" >
-                                    <tr>
-                                        <th data-role="button" @click="selectAll">*</th>
-                                        <th>Название</th>
-                                    </tr>
+                <v-layout row wrap >
+                    <v-btn id="upload"
+                           v-show="!isPickFolderMode"
+                           :disabled="!isLibraryAvailable"
+                           color="primary"
+                           @click="uploadTrigger"
+                    >
+                        <v-icon class="pr-1">cloud_upload</v-icon>
+                        {{ l18n('upload') }}
+                    </v-btn>
+                    <div ref="uploadPreview" style="display: none"></div>
 
-                                    <tr v-if="pathItems.length > 1 && isLibraryAvailable" @dblclick.stop="goBack">
-                                        <td>
-                                            <span><i class="fa fa-arrow-up"></i></span>
-                                        </td>
-                                        <td><span class="is-unselectable">...</span></td>
-                                    </tr>
-                                    <tr v-for="item in visibleItems" @dblclick.stop.prevent="onOpenItem(item)" @click.stop.prevent="onSelectItem(item)"
-                                        :class="[{'is-selected': currentItem && item.basename === currentItem.basename},{ 'notification is-success': item.isSelected}]">
-                                        <td>
-                                            <span v-if="item.type === mediaTypes.FOLDER">
-                                                <i class="fa fa-folder"></i>
-                                            </span>
-                                            <span v-else-if="isImage(item)" class="image is-16x16">
-                                                <img :src="fullPath(item)" alt="">
-                                            </span>
-                                            <span v-else >
-                                                <i class="fa fa-file"></i>
-                                            </span>
-                                        </td>
-                                        <td><span class="is-unselectable">{{ item.basename }}</span></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div class="column">
-                                <div v-if="currentItem">
-                                    <p class="title is-6">{{ currentItem.basename }}</p>
+                    <v-btn flat color="success" :disabled="!isLibraryAvailable" @click="newFolder">
+                        {{ l18n('create_folder') }}
+                    </v-btn>
 
-                                    <div v-if="currentItem.type === mediaTypes.ITEM">
-                                        <div>
-                                            <a :href="fullPath(currentItem)+'?hash=' + hash">Ссылка</a>
-                                        </div>
-                                        <figure class="image" v-if="isCurrentItemImage">
-                                            <img :src="fullPath(currentItem)+'?hash=' + hash" alt="">
-                                        </figure>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <v-btn flat color="red" :disabled="!isLibraryAvailable || (pickedItems.length == 0)" @click="deleteItems(null)">
+                        {{ l18n('delete') }}
+                    </v-btn>
 
+                    <v-spacer></v-spacer>
+
+                    <v-btn v-if="!isPickFolderMode" flat :disabled="(pickedItems.length == 0) || !isLibraryAvailable" @click="moveItem">
+                        {{ l18n('move') }}
+                    </v-btn>
+                </v-layout>
+
+
+                <v-text-field
+                        prepend-icon="search"
+                        :label="l18n('search_label')"
+                        v-model.trim="search.value"
+                        autofocus
+                        class="mt-2"
+                        clearable
+                ></v-text-field>
+
+                <v-progress-linear v-show="uploadProgress.active" :indeterminate="true"></v-progress-linear>
+
+                <v-breadcrumbs class="pl-4 pt-0">
+                    <v-icon slot="divider">forward</v-icon>
+                    <v-breadcrumbs-item
+                            v-for="(pathItem, index) in pathItems" @click.native="goToItem(pathItem)"
+                            :key="index"
+                            :disabled="index == path.length"
+                    >
+                        {{ pathItem.basename }}
+                    </v-breadcrumbs-item>
+                </v-breadcrumbs>
+
+                <v-list class="pb-0">
+                    <v-list-tile >
+                        <v-list-tile-action>
+                            <v-menu offset-y>
+                                <v-btn slot="activator" icon><v-icon>more_vert</v-icon></v-btn>
+                                <v-list>
+                                    <v-list-tile @click="changeVisibleSelected(true)">
+                                        <v-list-tile-avatar>
+                                            <v-icon>check_circle</v-icon>
+                                        </v-list-tile-avatar>
+                                        <v-list-tile-action>{{ l18n('select_all') }}</v-list-tile-action>
+                                    </v-list-tile>
+                                    <v-list-tile @click="changeVisibleSelected(false)">
+                                        <v-list-tile-avatar>
+                                            <v-icon>check_circle_outline</v-icon>
+                                        </v-list-tile-avatar>
+                                        <v-list-tile-title>{{ l18n('deselect_all') }}</v-list-tile-title>
+                                    </v-list-tile>
+                                </v-list>
+                            </v-menu>
+                        </v-list-tile-action>
+                        <v-list-tile-content>
+                            <v-list-tile-title>{{ l18n('name') }}</v-list-tile-title>
+                        </v-list-tile-content>
+                    </v-list-tile>
+                    <v-divider></v-divider>
+                </v-list>
+
+            </v-flex>
+
+            <v-flex fill-height style="position: relative;">
+                <div class="scroll-container">
+                    <v-layout v-show="libraryState == libraryStates.LOADING" justify-center >
+                        <v-progress-circular :size="50" indeterminate color="primary"></v-progress-circular>
+                    </v-layout>
+
+                    <v-list class="pt-0">
+                        <v-list-tile
+                                v-show="!(path === root.basename || !isLibraryAvailable)"
+                                @click.stop="goBack"
+                        >
+                            <v-list-tile-avatar>
+                                <v-icon>arrow_back</v-icon>
+                            </v-list-tile-avatar>
+                            <v-list-tile-title>{{ l18n('back') }}</v-list-tile-title>
+                        </v-list-tile>
+
+                        <v-list-tile v-show="!visibleItems.length && (libraryState != libraryStates.LOADING)">
+                            <v-list-tile-avatar></v-list-tile-avatar>
+                            <v-list-tile-title>{{ l18n('list_empty') }}</v-list-tile-title>
+                        </v-list-tile>
+
+                        <v-list-tile avatar :key="item.basename"
+                                     v-for="item in visibleItems"
+                                     href="javascript:;"
+                        >
+                            <v-list-tile-action>
+                                <v-checkbox v-model="item.isSelected"></v-checkbox>
+                            </v-list-tile-action>
+                            <v-list-tile-avatar>
+                                <v-icon v-if="item.type === mediaTypes.FOLDER">folder</v-icon>
+                                <v-avatar v-else-if="isImage(item)"
+                                          :size="48"
+                                >
+                                    <img :src="fullPath(item)">
+                                </v-avatar>
+                                <v-icon v-else="item.type === mediaTypes.FOLDER">file_copy</v-icon>
+                            </v-list-tile-avatar>
+                            <v-list-tile-content
+                                    @dblclick="onOpenItem(item)"
+                                    @click="onSelectItem(item)"
+                            >
+                                <v-list-tile-title>{{ item.basename }}</v-list-tile-title>
+                            </v-list-tile-content>
+                            <v-list-tile-action>
+                                <v-menu offset-y>
+                                    <v-btn slot="activator" icon><v-icon>more_vert</v-icon></v-btn>
+                                    <v-list>
+                                        <v-list-tile @click="deleteItems(item)">
+                                            <v-list-tile-avatar>
+                                                <v-icon>delete</v-icon>
+                                            </v-list-tile-avatar>
+                                            <v-list-tile-action>{{ l18n('delete') }}</v-list-tile-action>
+                                        </v-list-tile>
+                                        <v-list-tile v-show="isImage(item)" @click="cropItem(item)">
+                                            <v-list-tile-avatar>
+                                                <v-icon>crop</v-icon>
+                                            </v-list-tile-avatar>
+                                            <v-list-tile-title>{{ l18n('crop') }}</v-list-tile-title>
+                                        </v-list-tile>
+                                        <v-list-tile @click="renameItem(item)">
+                                            <v-list-tile-avatar>
+                                                <v-icon>edit</v-icon>
+                                            </v-list-tile-avatar>
+                                            <v-list-tile-title>{{ l18n('rename') }}</v-list-tile-title>
+                                        </v-list-tile>
+                                        <v-list-tile v-show="isImage(item)" @click="previewImage(item)">
+                                            <v-list-tile-avatar>
+                                                <v-icon>share</v-icon>
+                                            </v-list-tile-avatar>
+                                            <v-list-tile-title>{{ l18n('view') }}</v-list-tile-title>
+                                        </v-list-tile>
+                                        <v-list-tile v-show="item.type === mediaTypes.ITEM" href="javascript:;">
+                                            <v-list-tile-avatar>
+                                                <v-icon>cloud_download</v-icon>
+                                            </v-list-tile-avatar>
+                                            <v-list-tile-title><a :href="fullPath(item)" target="_blank">{{ l18n('download') }}</a></v-list-tile-title>
+                                        </v-list-tile>
+                                    </v-list>
+                                </v-menu>
+                            </v-list-tile-action>
+                        </v-list-tile>
+                    </v-list>
                 </div>
+            </v-flex>
+        </v-layout>
 
+        <v-dialog
+                v-model="previewDialog.active"
+                fullscreen
+                hide-overlay
+                transition="dialog-bottom-transition"
+                scrollable
+        >
+            <v-card>
+                <v-toolbar card>
+                    <v-toolbar-title>{{ previewDialog.item.basename }}</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn flat color="red" @click="previewDialog.active = false">
+                        {{ l18n('close') }}
+                    </v-btn>
+                </v-toolbar>
+                <v-card-text class="text-xs-center">
+                    <img :src="fullPath(previewDialog.item)" style="max-width: 100%; display: inline-block;">
+                </v-card-text>
+            </v-card>
+        </v-dialog>
 
-                <div v-if="editForm.state != editStates.NONE" class="modal is-active">
-                    <div class="modal-background"></div>
-                    <div class="modal-card">
-                        <header class="modal-card-head">
-                            <p class="modal-card-title">{{ editForm.title }}</p>
-                        </header>
-                        <section class="modal-card-body">
-                            <div class="edit-form">
-                                <div class="field ">
-                                    <label class="label">Название</label>
-                                    <div class="control">
-                                        <input type="text" class="input" v-model="editForm.value">
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                        <footer class="modal-card-foot">
-                            <a :class="{'is-static': !editForm.value, 'is-loading': editForm.state === editStates.POSTING }" class="button is-success" @click="submitEditForm">Подтвердить</a>
-                            <a class="button is-danger is-outlined" @click="cancelEdit">Отмена</a>
-                        </footer>
-                    </div>
-                </div>
+        <v-dialog v-model="renameDialog.active" max-width="500px">
+            <v-card>
+                <v-card-title>{{ l18n('rename') }}</v-card-title>
+                <v-card-text>
+                    <v-text-field
+                            :label="l18n('name')"
+                            v-model.trim="renameDialog.value"
+                            autofocus
+                    ></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                            :disabled="(renameDialog.value === '') || renameDialog.loading"
+                            :loading="renameDialog.loading" color="success" flat
+                            @click="submitRenameDialog">{{ l18n('rename') }}</v-btn>
+                    <v-btn
+                            :disabled="renameDialog.loading" color="red" flat
+                            outlined @click.stop="renameDialog.active = false">{{ l18n('cancel') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
-                <div v-if="modalApprove.state != editStates.NONE" class="modal is-active">
-                    <div class="modal-background"></div>
-                    <div class="modal-card">
-                        <header class="modal-card-head">
-                            <p class="modal-card-title">{{ modalApprove.title }}</p>
-                        </header>
-                        <section class="modal-card-body">
-                            <p class="modal-card-title">{{ modalApprove.text }}</p>
-                        </section>
-                        <footer class="modal-card-foot">
-                            <a class="button is-success" @click="modalApproveOk">Подтвердить</a>
-                            <a class="button is-danger is-outlined" @click="modalApproveCancel">Отмена</a>
-                        </footer>
-                    </div>
-                </div>
+        <v-dialog v-model="createFolderDialog.active" max-width="500px">
+            <v-card>
+                <v-card-title>{{ l18n('create_folder') }}</v-card-title>
+                <v-card-text>
+                    <v-text-field
+                            :label="l18n('name')"
+                            v-model.trim="createFolderDialog.value"
+                            autofocus
+                    ></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                            :disabled="(createFolderDialog.value === '') || createFolderDialog.loading"
+                            :loading="createFolderDialog.loading" color="success" flat
+                            @click="submitCreateFolderDialog"
+                    >{{ l18n('create') }}</v-btn>
+                    <v-btn
+                            :disabled="createFolderDialog.loading" color="red" flat
+                            outlined @click.stop="createFolderDialog.active = false"
+                    >{{ l18n('cancel') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
-                <div v-show="cropForm.state != editStates.NONE" class="modal is-active">
-                    <div class="modal-background"></div>
-                    <div class="modal-card" style="width: 80%;">
-                        <header class="modal-card-head">
-                            <p class="modal-card-title">Редактировать изображение</p>
-                        </header>
-                        <section class="modal-card-body flex" style="padding: 0;">
-                            <div class="flex-grow">
-                                <img ref="cropper" >
-                            </div>
-                            <div v-show="!hasCropperSetting" class="flex-noshrink w-200px pad-10">
-                                <a href="javascript:;" class="button is-primary w100 mb-10" @click.prevent="setCropperAspect( 16 / 6 )">16:9</a>
-                                <a href="javascript:;" class="button is-primary w100 mb-10" @click.prevent="setCropperAspect( 4 / 3 )">4:3</a>
-                                <a href="javascript:;" class="button is-primary w100 mb-10" @click.prevent="setCropperAspect( 1 )">1:1</a>
-                                <a href="javascript:;" class="button is-primary w100 mb-10" @click.prevent="setCropperAspect( 2 / 3 )">2:3</a>
-                                <a href="javascript:;" class="button is-primary w100" @click.prevent="setCropperAspect( 'free' )">Free</a>
-                            </div>
-                        </section>
-                        <footer class="modal-card-foot">
-                            <a class="button is-success" @click="cropperSave">Сохранить</a>
-                            <a v-show="!hasCropperSetting" class="button is-danger is-outlined" @click="cropperCancel">Отмена</a>
-                        </footer>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <v-dialog v-model="approveDialog.active" max-width="500px">
+            <v-card>
+                <v-card-title>{{ approveDialog.title }}</v-card-title>
+                <v-card-text>
+                    <p>{{ approveDialog.text }}</p>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="success" flat @click.stop="submitApproveDialog">{{ l18n('approve') }}</v-btn>
+                    <v-btn color="red" flat outlined d @click.stop="cancelApproveDialog">{{ l18n('cancel') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <v-dialog
+                v-model="cropDialog.active"
+                fullscreen
+                hide-overlay
+                transition="dialog-bottom-transition"
+                scrollable
+        >
+            <v-card>
+                <v-toolbar card>
+                    <v-toolbar-title>{{ l18n('edit') }}</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn color="success" @click="submitCropDialog">{{ l18n('save') }}</v-btn>
+                    <v-btn color="red" flat v-show="!hasCropperSetting" @click="cancelCropDialog">{{ l18n('cancel') }}</v-btn>
+                </v-toolbar>
+                <v-card-text v-show="!hasCropperSetting" class="text-xs-center px-0 py-1" style="flex-shrink: 0;">
+                    <v-btn flat @click="setCropperAspect( 16 / 6 )">16:9</v-btn>
+                    <v-btn flat @click="setCropperAspect( 4 / 3 )">4:3</v-btn>
+                    <v-btn flat @click="setCropperAspect( 1 )">1:1</v-btn>
+                    <v-btn flat @click="setCropperAspect( 2 / 3 )">2:3</v-btn>
+                    <v-btn flat @click="setCropperAspect( 'free' )">{{ l18n('free_size') }}</v-btn>
+                </v-card-text>
+                <v-container fluid class="px-0 py-0">
+                    <img ref="cropper" >
+                </v-container>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <script>
-
-    // TODO: refactor simple modal to component
-
     import MediaTypes from './../utils/types';
     import MediaUtils from './../utils';
     import FormBehaviorTypes from './../../utils/types';
     import CrudApi from './../../api';
     import CrudUrls from './../../api/urls';
     import LibraryBuilder from './../builder';
+
     let Dropzone = require('dropzone');
     import Cropper from 'cropperjs';
-
-    let EditStates = {
-        NONE: '',
-        NEW_FOLDER: 'newfolder',
-        RENAME_FOLDER: 'renamefolder',
-        MOVE_ITEM: 'moveitem',
-        CROP_IMAGE: 'cropper',
-        POSTING: 'posting'
-    };
 
     let LibraryStates = {
         BROWSE: 'browse',
@@ -203,13 +322,7 @@
     export default {
         name: 'media-library',
         props: {
-            active: {
-                default: true
-            },
-            type:{
-                type: String
-            },
-            crudField:{
+            options: {
                 type: Object,
                 default: null
             }
@@ -217,50 +330,63 @@
         data: function () {
             return {
                 dz: null,
+
                 items: [],
+
                 root: { basename: 'uploads', dirname: '', type: 'folder'},
-                currentFolder: undefined,
+
                 currentItem: undefined,
+
                 path: '',
-                editForm: {
-                    state: EditStates.NONE,
-                    title: '',
-                    value: ''
-                },
+
                 libraryState: LibraryStates.BROWSE,
-                dropZone: {},
-                progressValue: 0,
-                modalApprove: {
-                    title: '',
-                    text: '',
-                    state: EditStates.NONE,
-                    onApprove: undefined
+
+                uploadProgress: {
+                    active: false,
+                    value: 0
                 },
 
-                cropForm: {
-                    state: EditStates.NONE,
-                    onApprove: undefined,
-                    onCancel: undefined
-                },
+                title: '',
 
-                modalSelectDir:{
-                    title: '',
-                    text: '',
-                    items: [],
-                    state: EditStates.NONE,
-                    onApprove: undefined
-                },
-                baseUrl: '',
-                title: 'Медиа библиотека',
                 search: {
                     value: ''
                 },
-                hash: Date.now()
+
+                hash: Date.now(),
+
+                renameDialog: {
+                    active: false,
+                    loading: false,
+                    item: {},
+                    value: ''
+                },
+                createFolderDialog: {
+                    active: false,
+                    loading: false,
+                    value: ''
+                },
+                approveDialog: {
+                    title: '',
+                    text: '',
+                    active: false,
+                    onApprove: undefined
+                },
+                cropDialog: {
+                    active: false,
+                    onApprove: undefined,
+                    onCancel: undefined
+                },
+                previewDialog: {
+                    active: false,
+                    item: {}
+                }
             }
         },
         computed: {
             hasCropperSetting(){
-                return this.crudField && this.crudField.additional && this.crudField.additional.cropper;
+                return this.options.crudField
+                    && this.options.crudField.additional
+                    && this.options.crudField.additional.cropper;
             },
             mediaTypes(){
                 return MediaTypes;
@@ -277,9 +403,6 @@
                     return this.items;
                 }
             },
-            editStates(){
-                return EditStates;
-            },
             libraryStates(){
                 return LibraryStates;
             },
@@ -290,17 +413,14 @@
                 return FormBehaviorTypes;
             },
             isPickMode(){
-                return this.type !== FormBehaviorTypes.BROWSE;
+                return this.options.type !== FormBehaviorTypes.BROWSE;
             },
             isPickFolderMode(){
-                return this.type === FormBehaviorTypes.PICK_FOLDER;
+                return this.options.type === FormBehaviorTypes.PICK_FOLDER;
             },
             pickedItems(){
 
-                return _.filter(this.items, (i) => {
-                    return (i.type === MediaTypes.ITEM) && i.isSelected
-                });
-
+                return _.filter(this.items, i => i.isSelected );
             },
             pathItems(){
 
@@ -311,7 +431,7 @@
                     joinedPath += (i > 0 ? '/' : '') + item;
 
                     return {
-                        basename: i === 0 ? 'Библиотека' : item,
+                        basename: i === 0 ? this.l18n('media_library_title') : item,
                         dirname: joinedPath
                     }
                 });
@@ -323,222 +443,223 @@
 
         },
         methods: {
+            changeVisibleSelected(isSelected){
 
-            /******************************** behavior *********************************/
+                _.each(this.visibleItems, (i)=>{
+                    i.isSelected = isSelected;
+                });
+            },
 
-            pickItem(){
-                let selectedItems = _.map(this.pickedItems, (i)=>this.storagePath(i));
-                this.$emit("pick", selectedItems);
+            uploadTrigger(){
+                this.dz.hiddenFileInput.click();
+            },
+
+            previewImage(item){
+                this.previewDialog.item = item;
+                this.previewDialog.active = true;
+            },
+
+            pickItems(){
+
+                this.options.pickItems(
+                    _.map(
+                        _.filter(this.pickedItems, p=>p.type === MediaTypes.ITEM),
+                        i=>this.storagePath(i)
+                    )
+                );
+
+                this.options.closeLibrary();
             },
 
             closeLibrary(){
-                this.$emit("cancel");
+
+                this.options.closeLibrary();
             },
-
-            /******************************** end behavior *********************************/
-
-            /******************************** modal **********************************/
 
             setCropperAspect(aspect){
                 this.cropper.setAspectRatio(aspect);
             },
-            cropItem(){
+            cropItem(item){
 
-                if (this.currentItem){
+                this.cropper.replace(this.fullPath(item));
 
-                    this.cropper.replace(this.fullPath(this.currentItem));
+                this.showCropDialog(()=>{
 
-                    this.showCrop(()=>{
+                    CrudApi.mediaItemCrop({
+                        item: item,
+                        crop_data: this.cropper.getData(true)
+                    })
+                    .then(()=>{
+                        this.getItems();
+                        AdminManager.showSuccess(this.l18n('success_completed'));
+                    }).catch((error)=>{
 
-                        CrudApi.mediaItemCrop({
-                            item: this.currentItem,
-                            crop_data: this.cropper.getData(true)
-                        })
-                        .then(()=>{
-                                this.getItems();
-                                toastr.success('Успешно выполнено');
-                        }).catch((error)=>{
-
-                            toastr.error(error);
-                        });
+                        AdminManager.showError(this.l18n('action_error') + ': ' + error);
                     });
+                });
+            },
+            submitCropDialog(){
+                if (this.cropDialog.onApprove) this.cropDialog.onApprove();
+
+                this.cancelCropDialog();
+            },
+            cancelCropDialog(){
+                this.cropDialog.active = false;
+            },
+
+            showCropDialog(onApprove, onCancel){
+                this.cropDialog.onApprove = onApprove;
+                this.cropDialog.onCancel = onCancel;
+                this.cropDialog.active = true;
+            },
+
+            showApproveDialog(title, text, onApprove){
+                this.approveDialog.title = title;
+                this.approveDialog.text = text;
+                this.approveDialog.onApprove = onApprove;
+                this.approveDialog.active = true;
+            },
+
+            submitApproveDialog(){
+                if (this.approveDialog.onApprove) {
+                    this.approveDialog.onApprove();
                 }
-            },
-            cropperSave(){
-                if (this.cropForm.onApprove) this.cropForm.onApprove();
 
-                this.cropperCancel();
-            },
-            cropperCancel(){
-                this.cropForm.state = EditStates.NONE;
+                this.cancelApproveDialog();
             },
 
-            showCrop(onApprove, onCancel){
-                this.cropForm.onApprove = onApprove;
-                this.cropForm.onCancel = onCancel;
-                this.cropForm.state = EditStates.POSTING;
+            cancelApproveDialog(){
+                this.approveDialog.onApprove = undefined;
+                this.approveDialog.active = false;
             },
-
-            showModal(title, text, onApprove){
-                this.modalApprove.title = title;
-                this.modalApprove.text = text;
-                this.modalApprove.onApprove = onApprove;
-                this.modalApprove.state = EditStates.POSTING;
-            },
-
-            modalApproveOk(){
-                if (this.modalApprove.onApprove) {
-                    this.modalApprove.onApprove();
-                }
-
-                this.modalApproveCancel();
-            },
-
-            modalApproveCancel(){
-                this.modalApprove.onApprove = undefined;
-                this.modalApprove.state = EditStates.NONE;
-            },
-
-            /******************************** end modal **********************************/
-
-
 
             currentItemFullPath(){
                 return this.fullPath(this.currentItem);
             },
             storagePath(item){
-                return uploadPath + '/' + item.dirname + '/' + item.basename;
+                return item ? App.uploadPath + '/' + item.dirname + '/' + item.basename : '';
             },
             fullPath(item){
-                return baseUrl + this.storagePath(item);
+                return App.baseUrl + this.storagePath(item);
             },
             isImage(item){
+
                 return MediaUtils.isImageByExt(item.extension);
             },
 
             isCurrentItemImage(){
+
                 return this.isImage(this.currentItem.title);
             },
 
-            /******************************** edit actions **********************************/
-
             selectAll(){
-                _.forEach(this.items, (item)=>{ this.onSelectItem(item)});
+
+                _.each(this.items, (item)=>{ this.onSelectItem(item)});
             },
             newFolder(){
-                if (!this.isLibraryAvailable)
-                    return;
 
-                this.editForm.title = "Создать папку";
-                this.editForm.state = EditStates.NEW_FOLDER;
+                this.createFolderDialog.value = '';
+                this.createFolderDialog.active = true;
             },
-            renameItem(){
-                if (!this.isLibraryAvailable)
-                    return;
+            renameItem(item){
 
-                if (this.currentItem){
-                    this.editForm.title = "Переименовать";
-                    this.editForm.value = this.currentItem.basename;
-                    this.editForm.state = EditStates.RENAME_FOLDER;
-                }
+                this.renameDialog.item = item;
+                this.renameDialog.value = [item.basename].join('');
+                this.renameDialog.active = true;
             },
             moveItem(){
-                if (!this.isLibraryAvailable)
-                    return;
 
                 if (this.isPickFolderMode){
 
-                    this.$emit("pick", this.path);
+                    this.options.pickItems( this.path );
 
+                    this.options.closeLibrary();
                 } else {
-                    new LibraryBuilder(FormBehaviorTypes.PICK_FOLDER)
+
+                    let libraryComponent = new LibraryBuilder(FormBehaviorTypes.PICK_FOLDER)
                         .setCrudField(this.field)
-                        .onPick((path)=>{
+                        .build();
 
-                            CrudApi.mediaItemsMove({
-                                items: this.pickedItems,
-                                path: path
-                            })
-                                .then(()=>{
-                                    this.getItems();
-                                    toastr.success('Успешно перемещено');
-                                }).catch((error)=>{
+                    libraryComponent.options.closeLibrary = ()=> AdminManager.unmountComponent( libraryComponent );
+                    libraryComponent.options.pickItems = (path)=>{
 
-                                toastr.error(error);
-                            });
-                        })
-                        .build()
-                        .show();
-                }
-            },
-
-            submitEditForm(){
-                if ( _.trim(this.editForm.value)){
-                    if (this.editForm.state === EditStates.NEW_FOLDER){
-
-                        CrudApi.mediaFolderNew({
-                            root: this.path,
-                            title: this.editForm.value
-                        }).then(()=>{
-                            this.cancelEdit();
-                            this.getItems();
-
-                        })
-                        .catch((error)=>{
-                            this.cancelEdit();
-                            console.log(error);
-
-                            alert('При выполнении операции возникла ошибка.');
-                        });
-                    }
-
-                    if (this.editForm.state === EditStates.RENAME_FOLDER){
-
-                        CrudApi.mediaFolderRename({
-                                item: this.currentItem,
-                                title: this.editForm.value
-                            })
-                            .then(()=>{
-                                this.cancelEdit();
-                                this.getItems();
-                            })
-                            .catch((error)=>{
-                                console.log(error);
-                                this.cancelEdit();
-                                alert('При выполнении операции возникла ошибка.');
-                            });
-                    }
-                }
-            },
-
-            deleteItem(){
-                if (!this.isLibraryAvailable)
-                    return;
-
-                if (this.currentItem){
-
-                    this.showModal('Удаление', 'Подтвердите удаление ' + this.currentItem.basename, ()=>{
-                        CrudApi.mediaItemsDelete({
-                            item: this.currentItem,
-                            media_settings: this.crudField && this.crudField.additional ? this.crudField.additional : {}
+                        CrudApi.mediaItemsMove({
+                            items: this.pickedItems,
+                            path: path
                         })
                         .then(()=>{
+
                             this.getItems();
-                            toastr.success('Успешно удалено');
+                            AdminManager.showSuccess(this.l18n('success_moved'));
                         }).catch((error)=>{
-                            toastr.error(error);
+
+                            AdminManager.showError(this.l18n('action_error') + ': ' + error);
                         });
-                    });
+                    };
+
+                    AdminManager.mountComponent( libraryComponent, false );
                 }
             },
-            cancelEdit(){
-                this.editForm.title = "";
-                this.editForm.value = "";
-                this.editForm.state = EditStates.NONE;
-            },
-            /******************************** end edit form **********************************/
 
-            /******************************** common library actions *********************************/
+            submitCreateFolderDialog(){
+
+                this.createFolderDialog.loading = true;
+
+                CrudApi.mediaFolderNew({
+                    root: this.path,
+                    title: this.createFolderDialog.value
+                }).then(()=>{
+                    this.createFolderDialog.loading = false;
+                    this.createFolderDialog.active = false;
+
+                    this.getItems();
+                })
+                .catch((error)=>{
+                    this.createFolderDialog.loading = false;
+                    this.createFolderDialog.active = false;
+
+
+                    AdminManager.showError(this.l18n('action_error') + ': ' + error);
+                });
+            },
+            submitRenameDialog(){
+                this.renameDialog.loading = true;
+
+                CrudApi.mediaFolderRename({
+                    item: this.renameDialog.item,
+                    title: this.renameDialog.value
+                })
+                .then(() => {
+                    this.renameDialog.loading = false;
+                    this.renameDialog.active = false;
+                    this.getItems();
+                })
+                .catch((error) => {
+                    this.renameDialog.loading = false;
+                    this.renameDialog.active = false;
+
+                    AdminManager.showError(this.l18n('action_error') + ': ' + error);
+                });
+            },
+
+            deleteItems(item = null){
+
+                let items = item ? [ item ] : this.pickedItems;
+
+                this.showApproveDialog( this.l18n('delete_action') , item ? item.basename : (this.l18n('picked_files') + ' - ' + items.length), ()=>{
+                    CrudApi.mediaItemsDelete({
+                        items: items,
+                        media_settings: this.options.crudField && this.options.crudField.additional ? this.options.crudField.additional : {}
+                    })
+                    .then(()=>{
+                        this.getItems();
+                        AdminManager.showSuccess( this.l18n('success_delete') );
+                    }).catch((error)=>{
+                        AdminManager.showError(error);
+                    });
+                });
+            },
+
             onOpenItem(item){
                 if (item.type === MediaTypes.FOLDER){
                     this.path = item.dirname + '/' + item.basename;
@@ -546,7 +667,7 @@
                     this.getItems();
                 }
 
-                if (item.type === MediaTypes.ITEM && ((this.type === FormBehaviorTypes.PICK))){
+                if (item.type === MediaTypes.ITEM && ((this.options.type === FormBehaviorTypes.PICK))){
                     this.onSelectItem(item);
                     this.pickItem();
                 }
@@ -556,15 +677,14 @@
                     return;
 
                 if (item.type === MediaTypes.ITEM){
-                    if (this.type === FormBehaviorTypes.PICK){
+                    if (this.options.type === FormBehaviorTypes.PICK){
                         _.map(this.items, (i)=> {
-                            if (i.basename !== item.basename)
-                                this.$set(i, 'isSelected', false);
+                            if (i.basename !== item.basename) i.isSelected = false;
                         });
                     }
                 }
 
-                this.$set(item, 'isSelected', !item.isSelected);
+                item.isSelected = !item.isSelected;
 
                 this.currentItem = item;
             },
@@ -587,8 +707,6 @@
                 this.path = pathItem.dirname;
                 this.getItems();
             },
-            /******************************** end common  library actions *********************************/
-
 
             getItems(source = 'both', save_path = true ){
                 this.libraryState = LibraryStates.LOADING;
@@ -604,22 +722,29 @@
                 CrudApi.mediaGetItems({ path: this.path, source: source, save_path: save_path})
                     .then((response)=>{
                         this.libraryState = LibraryStates.BROWSE;
-                        this.items = response.data;
+
+                        this.items = _.map(response.data, i=>{
+                            this.$set(i, 'isSelected', false);
+                            return i;
+                        });
+
                         this.currentItem = undefined;
-                        mediaPath = this.path;
+
+                        App.mediaPath = this.path;
                     })
                     .catch((error)=>{
                         this.libraryState = LibraryStates.BROWSE;
-                        console.log(error);
+                        AdminManager.showError(this.l18n('action_error') + ': ' + error);
                     });
             }
         },
         beforeMount(){
 
-            if (this.crudField) this.title = 'Редактирование - ' + this.crudField.caption;
+            if (this.options.crudField)
+                this.title = this.l18n('edit') + ' - ' + this.options.crudField.caption;
 
-            if (mediaPath){
-                this.path = mediaPath;
+            if (App.mediaPath){
+                this.path = App.mediaPath;
                 this.getItems();
             } else {
 
@@ -629,49 +754,45 @@
         },
         mounted() {
 
+            this.title = this.l18n('media_library_title');
 
             this.cropper = new Cropper(this.$refs.cropper, {
                 viewMode: 1,
-                dragMode: "move",
-                preview: this.$refs.cropperpreview
+                dragMode: "move"
             });
-
 
             if (this.hasCropperSetting)
             {
-                if (this.crudField.additional.cropper.aspect){
+                if (this.options.crudField.additional.cropper.aspect){
 
-                    if (this.crudField.additional.cropper.aspect == '16:9') this.cropper.setAspectRatio( 16 / 9 );
-                    if (this.crudField.additional.cropper.aspect == '4:3') this.cropper.setAspectRatio( 4 / 3 );
-                    if (this.crudField.additional.cropper.aspect == '1:1') this.cropper.setAspectRatio( 1 );
-                    if (this.crudField.additional.cropper.aspect == '2:3') this.cropper.setAspectRatio( 2 / 3 );
+                    if (this.options.crudField.additional.cropper.aspect == '16:9') this.cropper.setAspectRatio( 16 / 9 );
+                    if (this.options.crudField.additional.cropper.aspect == '4:3') this.cropper.setAspectRatio( 4 / 3 );
+                    if (this.options.crudField.additional.cropper.aspect == '1:1') this.cropper.setAspectRatio( 1 );
+                    if (this.options.crudField.additional.cropper.aspect == '2:3') this.cropper.setAspectRatio( 2 / 3 );
                 }
             }
 
-            this.dz = new Dropzone(
-                this.$refs.upload,
+             this.dz = new Dropzone(
+                document.getElementById('upload'),
                 {
                     url: CrudUrls.media.UPLOAD,
-                    previewsContainer: "#uploadPreview",
-                    autoProcessQueue: !(this.crudField && this.crudField.additional && this.crudField.additional.cropper),
+                    autoProcessQueue: !(this.options.crudField && this.options.crudField.additional && this.options.crudField.additional.cropper),
                     createImageThumbnails: false,
-
+                    previewsContainer: this.$refs.uploadPreview,
                     totaluploadprogress: (uploadProgress, totalBytes, totalBytesSent)=>{
-                        this.progressValue = uploadProgress;
-                        if(uploadProgress === 100){
-                            $(this.$refs.progressgroup).delay(1500).slideUp();
-                        }
+                        this.uploadProgress.value = uploadProgress;
+                        if(uploadProgress === 100)
+                            this.uploadProgress.active = false;
                     },
                     processing: ()=>{
-                        this.progressValue = 0;
-                        $(this.$refs.progressgroup).fadeIn();
+                        this.uploadProgress.active = true;
                     },
                     sending: (file, xhr, formData) => {
                         formData.append("_token", CSRF_TOKEN);
                         formData.append("path", this.path);
-                        if (this.crudField && this.crudField.additional &&
-                            (this.crudField.additional.resize || this.crudField.additional.thumbnails))
-                            formData.append("media_settings", JSON.stringify(this.crudField.additional));
+                        if (this.options.crudField && this.options.crudField.additional &&
+                            (this.options.crudField.additional.resize || this.options.crudField.additional.thumbnails))
+                            formData.append("media_settings", JSON.stringify(this.options.crudField.additional));
 
                         if (file.cropData) formData.append("crop_data", JSON.stringify(file.cropData) );
                     },
@@ -698,14 +819,13 @@
                     },
                     success: function(e, res){
                         if(res.success){
-                            toastr.success(res.message, "Загружено");
+                            AdminManager.showSuccess(this.l18n('uploaded') + ': ' + res.message);
                         } else {
-                            toastr.error(res.message, "Ошибочка");
+                            AdminManager.showError(this.l18n('action_error') + ': ' + res.message);
                         }
                     },
                     error: function(e, res, xhr){
-                        console.log(e);
-                        toastr.error(res, "Ошибочка");
+                        AdminManager.showError(this.l18n('action_error') + ': ' + e);
                     },
                     queuecomplete: ()=>{
                         this.getItems();
@@ -718,46 +838,7 @@
 </script>
 
 <style>
-    .modal-content {
-        width: 100%;
-        height: 100%;
-        background-color: #fff;
-        margin: 20px;
-        padding: 20px;
-        border-radius: 5px;
-    }
-
-    .flex{
-        display: flex;
-    }
-
-    .flex-grow{
-        flex-grow: 1;
-    }
-
-    .flex-noshrink{
-        flex-shrink: 0;
-    }
-
-    .w-200px{
-        width: 200px;
-    }
-
-    .img-responsive{
-        max-width: 100%;
-        height: auto;
-        display: block;
-    }
-
-    .w100{
-        width: 100%;
-    }
-
-    .mb-10{
-        margin-bottom: 10px;
-    }
-
-    .pad-10{
-        padding: 10px;
+    .cropper-bg{
+        background-repeat: repeat;
     }
 </style>

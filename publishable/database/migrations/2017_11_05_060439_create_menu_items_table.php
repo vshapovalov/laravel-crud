@@ -20,8 +20,6 @@ class CreateMenuItemsTable extends Migration
 	        $table->string('url', 191)->nullable();
 	        $table->integer('parent_id')->unsigned()->nullable();
 	        $table->integer('order')->default(1);
-	        $table->string('path', 191)->nullable();
-	        $table->integer('level')->nullable();
             $table->timestamps();
         });
     }

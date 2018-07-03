@@ -1,8 +1,47 @@
 <template>
-    <div ref="pickergroup" :data-field="mode">
-        <input  ref="pickerinput" class="input" :type="mode" :value="value">
-        <div ref="picker"></div>
-    </div>
+    <v-layout row align-center>
+        <v-text-field style="cursor: pointer"
+            hide-details
+            readonly
+            class="px-0 py-0"
+            solo
+            :value="value"
+            @click="showPickDialog"
+        ></v-text-field>
+        <v-tooltip top>
+            <v-btn icon  slot="activator" @click="showPickDialog" class="my-0">
+                <v-icon color="accent">edit</v-icon>
+            </v-btn>
+            <span>{{ l18n('edit') }}</span>
+        </v-tooltip>
+
+        <v-tooltip top>
+            <v-btn icon slot="activator" @click="clearDate" class="my-0">
+                <v-icon color="red">clear</v-icon>
+            </v-btn>
+            <span>{{ l18n('clear') }}</span>
+        </v-tooltip>
+        <v-dialog
+                persistent
+                lazy
+                v-model="pickDialog.active"
+                :max-width="mode == 'datetime' ? '580px' : '290px'"
+        >
+            <v-card flat>
+                <v-card-text class="py-0 px-0">
+                    <div class="layout row">
+                        <v-date-picker v-model="date" scrollable class="card--flat" :locale="appLocale"></v-date-picker>
+                        <v-time-picker v-if="mode == 'datetime'" v-model="time" format="24hr" scrollable class="card--flat"></v-time-picker>
+                    </div>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn flat color="success" @click="submitPickDialog">{{ l18n('save') }}</v-btn>
+                    <v-btn flat color="red" @click="cancelPickDialog">{{ l18n('cancel') }}</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+    </v-layout>
 </template>
 
 <script>
@@ -16,62 +55,75 @@
         props: ["value", "field"],
         data: function () {
             return {
-                dValue: '',
-                mode: 'date'
-            }
-        },
-        computed: {},
-        methods: {
-            onChangeDate(sValue, dValue, oInputElement)
-            {
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
+                date: null,
+                time: null,
+                pickDialog: {
+                    active: false
                 }
-
-                this.$emit("change", sValue);
             }
         },
-        beforeMount(){
-            if (this.field.additional && this.field.additional.mode){
-                this.mode = this.field.additional.mode;
+        watch:{
+            value(val, oldVal){
+                if (val){
+
+                    let d, t;
+
+                    [d, t] = val.split(' ');
+
+                    this.date = d;
+
+                    if ( (this.mode == 'datetime') && t)
+                        this.time = t;
+                }
             }
         },
-        mounted() {
+        computed: {
+            mode(){ return (this.field.additional && this.field.additional.mode) || 'date' },
+            appLocale(){ return App.locale; }
+        },
+        methods: {
+            emitChange(){
 
-            $(this.$refs.picker).DateTimePicker({
-                mode: this.mode,
-                dateSeparator: "-",
-                dateTimeFormat: "yyyy-MM-dd HH:mm:ss",
-                dateFormat: "yyyy-MM-dd",
-                timeFormat: "HH:mm",
-                shortDayNames: ["Вск", "Пн", "Вт", "Ср", "Чт", "Пт", "Суб"],
-                fullDayNames: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
-                shortMonthNames:["Янв", "Фев", "Мар", "Апр", "Май", "Юн", "Юл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
-                fullMonthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
-                titleContentDate: "Дата",
-                titleContentTime: "Время",
-                titleContentDateTime: "Дата и время",
-                buttonsToDisplay: ["HeaderCloseButton", "SetButton", "ClearButton"],
-                setButtonContent: "Указать",
-                clearButtonContent: "Очистить",
-                isPopup: true,
-                parentElement: this.$refs.pickergroup,
+                if (!this.date){
+                    this.$emit('change', null)
+                } else {
 
-                isInline: false,
-                inputElement: this.$refs.pickerinput,
-                label: {
-                    "year": "Год",
-                    "month": "Месяц",
-                    "day": "День",
-                    "hour": "Час",
-                    "minutes": "Минуты",
-                    "seconds": "Секуды",
-                    "meridiem": "Меридиан"
-                },
-                settingValueOfElement: this.onChangeDate
-            });
+                    let changeValue = this.date;
+
+                    if (this.mode == 'datetime')
+                        changeValue += ' ' + (this.time || '00:00') + ':00';
+
+                    this.$emit('change', changeValue);
+                }
+            },
+            showPickDialog(){
+                this.pickDialog.active = true;
+            },
+            cancelPickDialog(){
+                this.pickDialog.active = false;
+            },
+            submitPickDialog(){
+
+                this.emitChange();
+
+                this.cancelPickDialog();
+            },
+            clearDate(){
+                this.date = null;
+                this.time = null;
+
+                this.emitChange();
+            },
         }
     }
 </script>
+
+<style>
+    .v-time-picker-title__time .v-picker__title__btn, .v-time-picker-title__time span{
+        height: 56px !important;
+        font-size: 56px !important;
+    }
+    .v-time-picker-clock__container{
+        height: 286px !important;
+    }
+</style>

@@ -16,7 +16,6 @@ class CrudServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'crud');
     }
 
@@ -68,6 +67,9 @@ class CrudServiceProvider extends ServiceProvider
 			'crud_config' => [
 				"{$publishablePath}/config/cruds.php" => config_path('cruds.php'),
 			],
+            'crud_l18n' => [
+                "{$publishablePath}/lang/" => resource_path('lang'),
+            ],
 		];
 
 		foreach ($publishable as $group => $paths) {

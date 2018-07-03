@@ -1,12 +1,10 @@
 import CrudUtils from './utils';
-import CrudEditor from './editor';
 
 export default class CrudBuilder{
 
     constructor(crud, crudType){
         this.crud = crud;
         this.crudType = crudType;
-        this.workspaceSelector = AdminManager.getWorkspaceSelector();
     }
 
     onPick(callback){
@@ -24,23 +22,19 @@ export default class CrudBuilder{
         return this;
     }
 
-    setWorkspaceSelector(workspaceSelector){
-        this.workspaceSelector = workspaceSelector;
-        return this;
-    }
-
     build(){
-
-        let elemetId = 'crud' + CrudUtils.randomInteger(1, 10000);
-
-        $(this.workspaceSelector).append(`<div id="${elemetId}"></div>`);
-
-        return new CrudEditor(
-            elemetId,
-            this.crud,
-            this.crudType,
-            this._onPick,
-            this._onCancel,
-            this._onGetItem);
+        return {
+            id: CrudUtils.randomInteger(1, 100000),
+            name: 'crud-editor',
+            options:{
+                type: this.type,
+                crud: this.crud,
+                editorType: this.crudType,
+                pickItems: this._onPick,
+                close: this._onCancel,
+                isModal: this.crudType !== 'browse',
+                getItem: this._onGetItem
+            }
+        };
     }
 }

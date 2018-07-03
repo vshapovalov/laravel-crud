@@ -120,7 +120,7 @@ class Crud {
 			$q->where('id', '=', Auth::user()->id);
 		})->get()->pluck('id');
 
-		$menuItems = CrudMenu::where('status','enabled')->whereHas('roles', function($q) use ($roles){
+		$menuItems = CrudMenu::with('items')->where('status','enabled')->whereHas('roles', function($q) use ($roles){
 			$q->whereIn('id', $roles);
 		})->orDoesntHave('roles')->get()->toArray();
 
@@ -146,7 +146,7 @@ class Crud {
 
 		$this->menu = $menu;
 
-		$this->config['menu'] = $menu;
+		$this->config['menu'] = $menuItems; //$menu;
 	}
 
 	function getCrudConfig(){
@@ -404,13 +404,13 @@ class Crud {
 
 	function checkAccess($crudCode, $checkAction){
 
-		return crud_roles()->first(function ($role, $key) use ($crudCode, $checkAction){
+		return crud_roles()->first(function ($role ) use ($crudCode, $checkAction){
 
-		    if ($role->users->first(function ($user, $key) {
+		    if ($role->users->first(function ($user) {
 					return $user->id == Auth::user()->id;
 				})) {
 
-			 	return $role->forms->first(function ($form, $key) use ($crudCode, $checkAction){
+			 	return $role->forms->first(function ($form) use ($crudCode, $checkAction){
 
 				    return ($form->code == $crudCode) && $form->pivot->{$checkAction};
 			    });
@@ -464,14 +464,12 @@ class Crud {
 			}
 
 			// if not marked as edit field, then go over
+
 			if (
-			!(in_array('edit', $field['visibility'])
-			  || in_array('add', $field['visibility'])
-			  || (
-				  !in_array('add', $field['visibility'])
-				  && isset($field['by_default'])
-			  )
-			)
+			    !( in_array('edit', $field['visibility'])
+                    || in_array('add', $field['visibility'])
+			        || in_array('hidden', $field['visibility'])
+			    )
 			) {
 				continue;
 			}
@@ -699,40 +697,23 @@ class Crud {
 			}
 		}
 
-		if (!$itemSaved) {
-			$item->save();
-		}
-
 		if (isset($crud['type']) && $crud['type'] == 'tree'){
 
-			if ($item->parent) {
+			if( !isset($id) ){
+                if ($item->parent_id == null){
 
-				$item->level = $item->parent->level + 1;
-				$item->path = $item->parent->path . str_pad($item->id, 4, '0', STR_PAD_LEFT) . ';';;
-
-//				if(!isset($id) || ($item->parent->id <> $inputValues[ $crud['tree']['parent']])){
-				if(!isset($id) || ($item->parent->id <> $inputValues[ 'parent_id' ])){
-					//$item->order = call_user_func($crud['model']."::where", $crud['tree']['parent'], '=', $item->parent->id)->
-					$item->order = call_user_func($crud['model']."::where", 'parent_id', '=', $item->parent->id)->
-						where($crud['id'],'<>', $item->id)->max('order') + 1;
-				} else {
-					$item->order = $inputValues['order'];
-				}
-
-			} else {
-				$item->level =  1;
-
-				//$item->order = call_user_func($crud['model']."::whereNull", $crud['tree']['parent'])->
-
-				$item->order = call_user_func($crud['model']."::whereNull", 'parent_id')->
-					where($crud['id'],'<>', $item->id)->max('order') + 1;
-
-				$item->path = str_pad($item->id, 4, '0', STR_PAD_LEFT) . ';';;
-			}
-
-			$item->save();
-
+                    $item->order = call_user_func($crud['model']."::where", 'parent_id', '=', $item->parent_id)->
+                        where($crud['id'],'<>', $item->id)->max('order') + 1;
+                } else {
+                    $item->order = call_user_func($crud['model']."::whereNull", 'parent_id')->
+                        where($crud['id'],'<>', $item->id)->max('order') + 1;
+                }
+            }
 		}
+
+        if (!$itemSaved) {
+            $item->save();
+        }
 
 		return $item;
 

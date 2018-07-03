@@ -1,5 +1,13 @@
 <template>
-    <textarea class="textarea" :value="value" @change="onChange"></textarea>
+    <v-textarea
+            textarea
+            :value="value"
+            @input.native="onChange"
+            hide-details
+            solo
+            auto-grow
+            clearable
+    ></v-textarea>
 </template>
 
 <script>
@@ -12,22 +20,12 @@
         props: ['field', 'value'],
         data: function () {
             return {}
-
         },
         computed: {},
         methods: {
             onChange(event){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
-
                 this.$emit("change", event.target.value)
             }
         },
-        mounted() {
-
-        }
     }
 </script>

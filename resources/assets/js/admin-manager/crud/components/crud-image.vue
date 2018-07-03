@@ -1,26 +1,92 @@
 <template>
     <div class="">
-        <div>
-            <a class="button is-primary" @click.stop.prevent="showLibrary">Выбрать</a>
-        </div>
-        <div v-for="(image, index) in images" :class="{'box': field.additional && field.additional.type === 'image', 'is-inline-block': field.additional && field.additional.type === 'image'}">
+        <v-layout row align-center>
+            <v-text-field
+                    hide-details
+                    class="px-0 py-0"
+                    @dblclick="showLibrary"
+                    readonly
+                    :value="message"
+                    solo
+            ></v-text-field>
 
-            <div v-if="field.additional && field.additional.type === 'image'" class="image is-64x64" @click.stop.prevent="showModal(image)">
-                <img :src="fullPath(image)" :alt="image">
-            </div>
-            <a v-else :href="fullPath(image)">{{ image }}</a>
-            <a class="button is-danger is-small" @click.stop.prevent="deleteImage(index)">удалить</a>
-        </div>
-        <div v-show="images.length === 0"><span>Нет {{ field.additional && field.additional.type === 'image' ? 'изображений' : 'файлов' }}</span></div>
-        <div class="modal" :class="{'is-active': modalForm.showing }">
-            <div class="modal-background" @click.stop.prevent="cancelModal"></div>
-            <div class="modal-content">
-                <p class="image">
-                    <img :src="fullPath(modalForm.image)" alt="">
-                </p>
-            </div>
-            <button class="modal-close is-large" aria-label="close" @click.stop.prevent="cancelModal"></button>
-        </div>
+            <v-tooltip top>
+                <v-btn icon  slot="activator" @click="showLibrary" class="my-0">
+                    <v-icon color="success">add</v-icon>
+                </v-btn>
+                <span>{{ l18n('add') }}</span>
+            </v-tooltip>
+
+            <v-tooltip top>
+                <v-btn icon  slot="activator" @click="showItemsDialog" class="my-0">
+                    <v-icon color="accent">edit</v-icon>
+                </v-btn>
+                <span>{{ l18n('edit') }}</span>
+            </v-tooltip>
+
+            <v-tooltip top>
+                <v-btn icon :disabled="items.length == 0" slot="activator" @click="clearItems" class="my-0">
+                    <v-icon color="red">clear</v-icon>
+                </v-btn>
+                <span>{{ l18n('clear') }}</span>
+            </v-tooltip>
+        </v-layout>
+
+        <v-dialog
+                v-model="itemsDialog.active"
+                scrollable
+                max-width="80%"
+        >
+            <v-card>
+                <v-card-title>
+                    <v-layout>
+                        <v-subheader>{{ field.caption }}</v-subheader>
+                        <v-spacer></v-spacer>
+                        <v-tooltip top>
+                            <v-btn slot="activator" icon @click="showLibrary" >
+                                <v-icon color="success">add</v-icon>
+                            </v-btn>
+                            <span>{{ l18n('add') }}</span>
+                        </v-tooltip>
+                    </v-layout>
+
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text >
+                    <v-layout row wrap>
+                        <v-flex xs12 :md3="type == 'image'" :key="image" v-for="(image, index) in itemsDialog.items" class="px-1 py-1">
+                            <v-card >
+
+                                <v-card-media v-show="type == 'image'":src="fullPath(image)" height="200px"></v-card-media>
+                                <v-card-actions>
+                                    <v-card-title v-show="type != 'image'"><a :href="fullPath(image)" target="_blank">{{ image }}</a></v-card-title>
+                                    <v-spacer></v-spacer>
+                                    <v-tooltip top>
+                                        <v-btn icon slot="activator"
+                                               @click="deleteImage(index)" class="my-0"
+                                        >
+                                            <v-icon color="red">clear</v-icon>
+                                        </v-btn>
+                                        <span>{{ l18n('delete') }}</span>
+                                    </v-tooltip>
+                                </v-card-actions>
+                            </v-card>
+                        </v-flex>
+                    </v-layout>
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="success" @click="submitItemsDialog">
+                        {{ l18n('save') }}
+                    </v-btn>
+                    <v-btn flat color="red" @click="itemsDialog.active = false">
+                        {{ l18n('cancel') }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+
+        </v-dialog>
     </div>
 </template>
 
@@ -38,23 +104,20 @@
         props: ['field', 'value'],
         data: function () {
             return {
-                images: [],
-                modalForm: {
-                    image: '',
-                    showing: false
+                items: [],
+                message: '',
+                itemsDialog:{
+                    active: false,
+                    items: []
                 }
             }
         },
         computed: {
             mode(){
-                let mode = 'multi';
-
-                if(this.field.additional && this.field.additional.mode) {
-                    mode = this.field.additional.mode;
-                }
-
-                return mode;
-
+                return (this.field.additional && this.field.additional.mode) ?  this.field.additional.mode : 'multi';
+            },
+            type(){
+                return (this.field.additional && this.field.additional.type) ?  this.field.additional.type : 'file';
             }
         },
         watch: {
@@ -62,106 +125,104 @@
                 handler(val, oldVal){
                     this.parseVal(val);
                 }
+            },
+            items(val, oldVal){
+                this.message = val.length + ' ' + ( this.type == 'image' ? l18n('images_qty') : l18n('files_qty'))
             }
         },
         methods: {
-            /********************************* modal ***********************************/
-            showModal(image){
-                this.modalForm.image = image;
-                this.modalForm.showing = true;
-            },
-            cancelModal(){
-                this.modalForm.showing = false;
-                this.modalForm.image = '';
-            },
-
-            /********************************* end modal ***********************************/
-
             fullPath(item){
-                return baseUrl + item;
+                return App.baseUrl + item;
             },
 
             parseVal(val){
-                this.images = [];
+                this.items = [];
 
-                if (this.mode === 'single'){
-                    if (val){
-                        this.images.splice(0,0,val);
-                    }
+                if (!val) return;
 
-                } else {
-                    if (val){
+                try {
+                    this.items.splice(0,0, ...( (this.mode === 'single') ? [val] : JSON.parse(val) ) );
+                } catch(e){}
 
-                        let parsedVal;
-
-                        try {
-                            parsedVal = JSON.parse(val);
-                        } catch(e){
-                        }
-
-                        if (parsedVal) this.images = parsedVal;
-                    }
-                }
             },
 
             emitChange(){
                 if (this.mode === 'single'){
-                    if (this.images.length>0){
-                        this.$emit('change', _.first(this.images));
-                    } else {
-                        this.$emit('change', '');
-                    }
+
+                    this.$emit('change', (this.items.length>0) ? _.first(this.items) : '' );
                 } else {
-                    this.$emit('change', JSON.stringify(this.images));
+
+                    this.$emit('change', JSON.stringify(this.items) );
                 }
             },
-            onPick(items){
+            onPick(pickedItems){
 
-                if (items && items.length>0){
+                let items = this.itemsDialog.active ? this.itemsDialog.items : this.items;
+
+                if (pickedItems && pickedItems.length>0){
+
                     if (this.mode === 'single'){
-                        this.images = [_.first(items)];
+
+                        items = [_.first(pickedItems)];
                     } else {
-                        this.images.splice(this.images.length, 0, ...items);
-                        this.images = _.uniq(this.images);
+
+                        items.splice(items.length, 0, ...pickedItems);
+                        items = _.uniq(items);
                     }
 
-                    this.emitChange();
+
+                    if (this.itemsDialog.active) {
+
+                        this.itemsDialog.items = items;
+                    } else {
+
+                        this.items = items;
+                        this.emitChange();
+                    }
                 }
             },
+
+            showItemsDialog(){
+
+                this.itemsDialog.items.splice(0, this.itemsDialog.items.length, ...this.items );
+                this.itemsDialog.active = true;
+            },
+
+            submitItemsDialog(){
+
+                this.items.splice(0, this.items.length, ...this.itemsDialog.items);
+                this.emitChange();
+                this.itemsDialog.active = false
+            },
+
             showLibrary(){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
 
-                let formBehavior = FormBehaviorTypes.PICK;
+                let libraryComponent = new LibraryBuilder(this.mode === 'multi' ? FormBehaviorTypes.PICK_MANY : FormBehaviorTypes.PICK).build();
 
-                if (this.mode === "multi") formBehavior = FormBehaviorTypes.PICK_MANY;
+                libraryComponent.options.crudField = this.field;
+                libraryComponent.options.closeLibrary = ()=> AdminManager.unmountComponent( libraryComponent ) ;
 
-                new LibraryBuilder(formBehavior)
-                    .setCrudField(this.field)
-                    .onPick(this.onPick)
-                    .build()
-                    .show();
+                libraryComponent.options.pickItems = (items)=>{
+
+                    this.onPick(items);
+                };
+
+                AdminManager.mountComponent( libraryComponent, false );
             },
-            deleteImage(index){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
 
-                this.images.splice(index, 1);
+            deleteImage(index){
+
+                this.itemsDialog.items.splice(index, 1);
+            },
+
+            clearItems(){
+
+                this.items = [];
                 this.emitChange();
             }
         },
         beforeMount(){
             this.parseVal(this.value);
-        },
-
-        mounted() {
-
         }
     }
 </script>

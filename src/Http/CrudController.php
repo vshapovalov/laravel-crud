@@ -51,12 +51,26 @@ class CrudController extends BaseController
 
 	function getItemsList($code, Request $request){
 
-		return [
-			'items' => Crud::getCrudItemsList(
-				$code,
-				$request->input('item', []),
-				$request->input('sort', [ 'field' => '']))
-		];
+        $response = [
+            'status' => 'success'
+        ];
+
+        if (Crud::checkAccess($code, 'select')) {
+            $response['items'] = Crud::getCrudItemsList(
+                $code,
+                $request->input('item', []),
+                $request->input('sort', [ 'field' => '']));
+
+        } else {
+
+            $response['status'] = 'error';
+            $response['errors'] = [
+                'access' => ['Недостаточно прав']
+            ];
+
+        }
+
+		return $response;
 
 	}
 
@@ -119,17 +133,17 @@ class CrudController extends BaseController
 		}
 	}
 
-	function treeUpdateItems($code, Request $request){
+	function bulkUpdateItems($code ){
 
 		$response = [
 			'status' => 'success'
 		];
 
-		if($data = $request->input('data', false)) {
+		if($items = request()->get('items', false)) {
 
-			foreach ($data as $treeItem){
+			foreach ($items as $item){
 
-				Crud::saveCrudItem($code, $treeItem);
+				Crud::saveCrudItem($code, $item);
 			}
 
 		}

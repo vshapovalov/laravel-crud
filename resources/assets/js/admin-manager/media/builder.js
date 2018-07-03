@@ -1,40 +1,46 @@
-import Library from './library';
-import Utils from './utils';
+import Utils from './../crud/utils';
 
 export default class MediaLibraryBuilder{
+
     constructor(type){
+
         this.type = type;
-        this.workspaceSelector = AdminManager.getWorkspaceSelector();
         this.crudField = null;
+        this.pickCallback = null;
+        this.cancelCallback = null;
     }
 
     onPick(pickCallback){
+
         this.pickCallback = pickCallback;
         return this;
     }
 
     setCrudField(crudField){
+
         this.crudField = crudField;
         return this;
     }
 
     onCancel(cancelCallback){
-        this.cancelCallback = cancelCallback;
-        return this;
-    }
 
-    setWorkspaceSelector(workspaceSelector){
-        this.workspaceSelector = workspaceSelector;
+        this.cancelCallback = cancelCallback;
         return this;
     }
 
     build(){
 
-        let elemetId = 'medialibrary' + Utils.randomInteger(1, 10000);
-
-        $(this.workspaceSelector).append(`<div id="${elemetId}"></div>`);
-
-        return new Library(elemetId, this.type, this.pickCallback, this.cancelCallback, this.crudField);
+        return {
+            id: 'component' + Utils.randomInteger(1, 100000),
+            name: 'media-library',
+            options:{
+                type: this.type,
+                crudField: this.crudField,
+                pickItems: this.pickCallback,
+                closeLibrary: this.cancelCallback,
+                isModal: this.type !== 'browse'
+            }
+        }
     }
 
 }

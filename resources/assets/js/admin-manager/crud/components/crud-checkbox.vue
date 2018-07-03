@@ -1,12 +1,15 @@
 <template>
-    <label class="checkbox">
-        <input type="checkbox" :checked="checked" @click="onClick">
-    </label>
+    <v-checkbox
+            :true-value="1"
+            :false-value="0"
+            v-model="checked"
+            :value="value"
+            hide-details
+    ></v-checkbox>
+
 </template>
 
 <script>
-
-    // TODO: refactor to true checkbox component :)
 
     export default {
         name: "crud-checkbox",
@@ -14,41 +17,25 @@
             prop: "value",
             event: "change"
         },
-        props: ['field', 'value'],
+        props: {
+           field: {},
+           value: { default: 0}
+        },
         data: function () {
             return {
-                checked: false
+                checked: 0
             }
         },
-        computed: {},
-        methods: {
-            onClick($event){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
-
-                this.$emit("change", $event.target.checked ? 1 : 0);
+        watch:{
+            checked(val, oldVal){
+                this.$emit("change", this.checked );
+            },
+            value(val, oldVal){
+                this.checked = val ? +val : 0;
             }
         },
-        watch: {
-            value: {
-                handler: function(val, oldVal){
-
-                    if (val && val !== 0 && val !== "0") {
-                        this.checked = true
-                    } else {
-                        this.checked = false
-                        this.$emit("change", 0);
-                    }
-
-                },
-                immediate: true
-            }
-        },
-        mounted() {
-
+        beforeMount(){
+            this.checked = 0;
         }
     }
 </script>

@@ -17,12 +17,6 @@
         computed: {},
         methods: {
             onChange(event){
-                if (this.field.readonly)
-                {
-                    toastr.info("Редактирование запрещено");
-                    return;
-                }
-
                 this.$emit("change", event.target.value);
             }
         },

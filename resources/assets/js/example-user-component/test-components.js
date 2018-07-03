@@ -1,48 +1,54 @@
-import VueTestComponent from './test-component.vue';
 
-class TestComponent {
-    constructor(){
-        this.instance = null;
-    }
+Vue.component('test-component', require('./test-component.vue'));
+Vue.component('editpanel-user-component', require('./editpanel-user-component.vue'));
 
-    createComponent(){
+AdminManager.registerMiddleware( (event, component, next)=>{
 
-        this.instance = new Vue({
-            template: '<test-component v-if="active"></test-component>',
-            data:{
-                active: true
-            },
-            watch:{
-                active: {
-                    handler(val, oldVal){
-                        if (!val){
-                            this.$nextTick(()=>{
-                                this.$destroy();
-                            });
-                        }
+    if (event == 'crud:on:mount') {
+
+        component.addComponents(
+            [
+                {
+                    id: 'test-component',
+                    name: 'test-component',
+                    options: {
+                        message: 'i am user component'
                     }
                 }
-            },
-            components: {
-                'test-component': VueTestComponent
-            }
-        });
+            ]
+        );
     }
 
-    // must be implemented
-    show(elementId){
+    next();
+});
 
-        this.createComponent();
+AdminManager.registerMiddleware( (event, component, next)=>{
 
-        this.instance.$mount('#' + elementId);
+    if (event == 'editpanel:on:mount') {
+
+        component.addComponents(
+            [
+                {
+                    id: 'editpanel-user-component',
+                    name: 'editpanel-user-component',
+                    options: {
+                        message: 'i am user component'
+                    }
+                }
+            ]
+        );
     }
 
-    // must be implemented
-    close(){
-        this.instance.active = false;
+    next();
+});
+
+let userComponent = {
+    id: 'user-component-1',
+    name: 'test-component',
+    options: {
+        isModal: false,
+        counterStartValue: 100
     }
-}
+};
 
-// register component creating bus event
-Bus.$on('user:testcomponent:mount', ()=> Bus.$emit('admin:instance:mount', new TestComponent()) );
-
+Bus.$on('user:testcomponent:mount', ()=> AdminManager.mountComponent( userComponent , true) );

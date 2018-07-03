@@ -83,21 +83,21 @@ export default class Utils {
 
     static defaultFieldValue(field){
 
-        if (field.hasOwnProperty('by_default')){
+        if ( _.has(field, 'by_default') && (field.by_default !== null) )
             return field.by_default;
-        }
 
         if (field.type === FieldTypes.TEXTBOX ||
-            field.type === FieldTypes.CHECKBOX ||
             field.type === FieldTypes.COLORBOX ||
             field.type === FieldTypes.TEXTAREA ||
             field.type === FieldTypes.DROPDOWN ||
             field.type === FieldTypes.DATEPICKER ||
             field.type === FieldTypes.RICHEDIT ||
             field.type === FieldTypes.TEXTBOX ||
-            field.type === FieldTypes.IMAGE ){
+            field.type === FieldTypes.IMAGE )
             return "";
-        }
+
+        if (field.type === FieldTypes.CHECKBOX )
+            return 0;
 
         if (field.type === FieldTypes.RELATION){
             if (field.relation.type === RelationTypes.BELONGS_TO
@@ -154,7 +154,7 @@ export default class Utils {
 
         let maxOrder = 0;
 
-        _.forEach(items, (i)=>{
+        _.each(items, (i)=>{
             if (i.level === level && (i.id !== id) && (i.order > maxOrder)) {
                 maxOrder = i.order;
             }

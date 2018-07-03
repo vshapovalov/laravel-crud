@@ -16,6 +16,14 @@ if(!function_exists('crud_image')){
 	}
 }
 
+if(!function_exists('getNull')){
+
+    function getNull(){
+
+        return null;
+    }
+}
+
 if(!function_exists('crud_image_thumb')){
 
 	function crud_image_thumb($items, $thumbName){

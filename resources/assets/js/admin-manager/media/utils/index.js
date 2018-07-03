@@ -6,7 +6,7 @@ export default class MediaUtils{
     }
 
     static isImageByExt(ext){
-        return !!_.some(Images, (i)=> i === ext);
+        return !!_.some(Images, (i)=> i.toLowerCase() === ext);
     }
 
     static randomInteger(min, max) {

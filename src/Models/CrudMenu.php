@@ -3,12 +3,9 @@
 namespace Vshapovalov\Crud\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
-use Vshapovalov\Crud\RelationshipsTrait;
 
 class CrudMenu extends Model
 {
-
 	function items(){
 		return $this->hasMany(CrudMenu::class, 'parent_id', 'id');
     }

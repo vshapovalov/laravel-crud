@@ -24,7 +24,7 @@ class Role extends Model
 		return $this->belongsToMany(CrudForm::class,
 			'role_crud_form',
 			'role_id',
-			'crud_form_id')->withPivot(['add', 'edit', 'delete']);
+			'crud_form_id')->withPivot(['select', 'add', 'edit', 'delete']);
 	}
 
 	function users(){

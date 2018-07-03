@@ -21,9 +21,9 @@ export default class CrudApi {
         return axios.get(apiUrls.crud.BASE + apiUrls.menu.LIST);
     }
 
-    static crudTreeMove(code,data){
+    static crudBulkUpdate(code,data){
 
-        return axios.post(this.getUrlByCrud(code) + apiUrls.crud.TREE_MOVE, data);
+        return axios.post(this.getUrlByCrud(code) + apiUrls.crud.BULK_UPDATE, data);
     }
 
     static crudGetItem(code, id){

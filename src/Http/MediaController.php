@@ -90,9 +90,13 @@ class MediaController extends BaseController
                 Storage::disk('public')->get($item['dirname'] .'/'. $item['basename'])
             );
 
+            $fileName = pathinfo($item['basename'], PATHINFO_FILENAME);
+            $fileExt = pathinfo($item['basename'], PATHINFO_EXTENSION);
+
             $this->processImage($image, [ 'crop' => request('crop_data') ] );
 
-            Storage::disk('public')->update($item['dirname'] .'/'. $item['basename'], $image->stream());
+            Storage::disk('public')
+                ->put($item['dirname'] .'/'. $fileName . '-cropped.' . $fileExt, $image->stream());
 
             $image->destroy();
         }
@@ -270,13 +274,15 @@ class MediaController extends BaseController
 			'status' => 'success'
 		];
 
-		if ($item = $request->input('item', false)){
+		if ($items = $request->input('items', false)){
 
-			if ($item['type'] == 'folder'){
-				Storage::disk('public')->deleteDirectory($item['dirname'] . '/' . $item['basename']);
-			} else {
-				Storage::disk('public')->delete($item['dirname'] . '/' . $item['basename']);
-			}
+		    foreach ($items as $item){
+                if ($item['type'] == 'folder'){
+                    Storage::disk('public')->deleteDirectory($item['dirname'] . '/' . $item['basename']);
+                } else {
+                    Storage::disk('public')->delete($item['dirname'] . '/' . $item['basename']);
+                }
+            }
 		}
 
 		return $response;
