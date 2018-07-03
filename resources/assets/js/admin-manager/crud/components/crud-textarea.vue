@@ -1,8 +1,7 @@
 <template>
     <v-textarea
             textarea
-            :value="value"
-            @input.native="onChange"
+            v-model="text"
             hide-details
             solo
             auto-grow
@@ -19,12 +18,26 @@
         },
         props: ['field', 'value'],
         data: function () {
-            return {}
+            return {
+                text: ''
+            }
+        },
+        watch: {
+            value:{
+                handler(val, oldVal){
+                    this.text = val;
+                },
+                immediate: true
+            },
+            text(val, oldVal){
+
+                this.onChange();
+            },
         },
         computed: {},
         methods: {
-            onChange(event){
-                this.$emit("change", event.target.value)
+            onChange(){
+                this.$emit("change", this.text == null ? '' : this.text);
             }
         },
     }

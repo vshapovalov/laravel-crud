@@ -197,12 +197,12 @@
                 scrollable
         >
             <v-card>
-                <v-toolbar card>
+                <v-toolbar card flat dense color="primary">
+                    <v-btn icon @click="previewDialog.active = false">
+                        <v-icon>clear</v-icon>
+                    </v-btn>
                     <v-toolbar-title>{{ previewDialog.item.basename }}</v-toolbar-title>
                     <v-spacer></v-spacer>
-                    <v-btn flat color="red" @click="previewDialog.active = false">
-                        {{ l18n('close') }}
-                    </v-btn>
                 </v-toolbar>
                 <v-card-text class="text-xs-center">
                     <img :src="fullPath(previewDialog.item)" style="max-width: 100%; display: inline-block;">

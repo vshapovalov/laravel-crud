@@ -197,7 +197,7 @@
 
             backOnMenu(){
                 this.selectedMenuItem = this.selectedMenuItem.parent_id
-                    ? _.first( this.menu, m => m.id = this.selectedMenuItem.parent_id)
+                    ? _.find( this.menu, m => m.id === this.selectedMenuItem.parent_id)
                     : null;
             },
 

@@ -4,6 +4,9 @@ Builded with <a href="https://vuejs.org" target="_blank">Vue.js</a>, <a href="ht
 
 Manage your data, store files.
 
+![crud table](http://teacup.kz/laravel-crud/Screenshot_2.png)
+![crud media](http://teacup.kz/laravel-crud/Screenshot_1.png)
+
 ## Dashboard components 
   
 - textbox (password, masked, slugify, prefix, suffix)
@@ -65,24 +68,23 @@ System options->Crud forms
 
 **textbox** - simple textbox
 ```json
-{"slugify": "fieldname_to_store_slug"}
-{"mode": "password"}
-{"mode": "masked", "mask":"+7(777)###-##-##"}
+{ "slugify": "fieldname_to_store_slug" }
+{ "mode": "password" }
+{ "mode": "masked", "mask":"+7(777)###-##-##" }
 ```
 
 **datepicker** - date picker
 ```json
-{"mode":"date"} 
-{"mode":"datetime"}
+{ "mode":"date or datetime" } 
 ```
 **dropdown** - simple dropdown, additional field required
 
 ```json
 {
-    "mode:":"single or multi", 
+    "mode:": "single or multi", 
     "values": [ 
-        {"key": "DRAFT", "value": "Draft"}, 
-        {"key": "PUBLISHED", "value": "Published"} 
+        { "key": "DRAFT", "value": "Draft" }, 
+        { "key": "PUBLISHED", "value": "Published" } 
     ] 
 }
 ```
@@ -97,11 +99,11 @@ System options->Crud forms
 ```json
 {
     "mode": "multi or single",
-    "type": "file or image"
-    "resize": { "width":1000, "height": null, "quality": 90},
+    "type": "file or image",
+    "resize": { "width":1000, "height": null, "quality": 90 },
     "thumbnails": [
-        { "name":"medium", "scale":50},
-        { "name":"small", "scale":25},
+        { "name":"medium", "scale":50 },
+        { "name":"small", "scale":25 },
         { "name":"cropped", "crop": {"width": 250, "height": 250 } },
         { "name":"fitted", "fit": {"width": 250, "height": 250 } }
     ] 
@@ -110,7 +112,7 @@ System options->Crud forms
 
 **relation** - relation field type, field has options
 ```json
-{ "buttons": [ "add", "edit", "pick", "delete_all" ] , "mode" : "simple or normal"}
+{ "buttons": [ "add", "edit", "pick", "delete_all" ] , "mode": "simple or normal" }
 ```
 
 
@@ -174,7 +176,7 @@ Also you can use own Vue components, just add them in components section of conf
 simple component file
 
 ```js
-Vue.component('test-component', require('./test-component.vue'));
+Vue.component('test-component', require('./test-component.vue') );
 
 let userComponent = {
     id: 'user-component-1',
@@ -185,7 +187,7 @@ let userComponent = {
     }
 };
 
-Bus.$on('user:testcomponent:mount', ()=> AdminManager.mountComponent( userComponent , true) );
+Bus.$on( 'user:testcomponent:mount', ()=> AdminManager.mountComponent( userComponent, true ) );
 ```
 then create dashboard menu item< and set action to 'user:testcomponent:mount'
  
@@ -201,7 +203,7 @@ if you did not call next(), the action will be interruted in some events:
 - editpanel:before:save
  
 ```js
-AdminManager.registerMiddleware( (event, options, next)=>{
+AdminManager.registerMiddleware( ( event, options, next )=>{
 
     if (event == 'crud:on:mount' && options.crud.code === 'users') {
 
@@ -237,8 +239,8 @@ Custom components can use Lodash, Axios, they are declared as window obj props
 
 ### How to create crud form
 
-watch this guide
+watch this guide (coming soon)
 
 ### How to make custom component
 
-watch this guide
+watch this guide (coming soon)
