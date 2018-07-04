@@ -127,7 +127,7 @@
                 }
             },
             items(val, oldVal){
-                this.message = val.length + ' ' + ( this.type == 'image' ? l18n('images_qty') : l18n('files_qty'))
+                this.message = val.length + ' ' + ( this.type == 'image' ? this.l18n('images_qty') : this.l18n('files_qty'))
             }
         },
         methods: {
