@@ -21,7 +21,7 @@
                     <v-btn flat :disabled="loading" @click.prevent="addItem" color="success">{{ l18n('add') }}</v-btn>
                 </div>
 
-                <div :key="component.id" :is="component.name" :options="component.options" v-for="component in userComponents"></div>
+                <div :key="component.id" :is="component.name" :options="component.options" :crud="crud" :items="items" v-for="component in userComponents"></div>
 
                 <v-text-field
                         v-if="crud.type === 'list'"

@@ -10,7 +10,7 @@
                 <v-btn color="success" @click="doSave" :disabled="!isReady">{{ l18n('save') }}</v-btn>
 
                 <div slot="extension" class="flex xs12">
-                    <div  :key="component.id" :is="component.name" :options="component.options" v-for="component in userComponents"></div>
+                    <div  :key="component.id" :is="component.name" :options="component.options" :crud="crud" :item="item" v-for="component in userComponents"></div>
 
                     <v-tabs v-model="activeTab" color="primary">
                         <v-tab v-for="tab in crudTabs" :key="tab">
