@@ -37,7 +37,7 @@ export default class AdminManager{
                 Bus.$emit( Events.ADMIN.CONFIG_LOADED, resp.data );
             })
             .catch((error)=>{
-                this.showError(this.l18n('action_error') + ': ' + error);
+                this.showError(App.l18n['action_error'] + ': ' + error);
             });
 
     }

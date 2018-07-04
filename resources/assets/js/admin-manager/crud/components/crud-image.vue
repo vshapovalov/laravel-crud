@@ -1,6 +1,45 @@
 <template>
     <div class="">
-        <v-layout row align-center>
+        <v-layout v-if="!collapsed" row align-center wrap>
+            <v-flex xs12>
+                <v-tooltip top>
+                    <v-btn icon  slot="activator" @click="showLibrary" class="my-0">
+                        <v-icon color="success">add</v-icon>
+                    </v-btn>
+                    <span>{{ l18n('add') }}</span>
+                </v-tooltip>
+
+                <v-tooltip top>
+                    <v-btn icon :disabled="items.length == 0" slot="activator" @click="clearItems" class="my-0">
+                        <v-icon color="red">clear</v-icon>
+                    </v-btn>
+                    <span>{{ l18n('delete_all') }}</span>
+                </v-tooltip>
+            </v-flex>
+            <v-flex xs12 class="layout row wrap">
+                <v-layout row wrap>
+                    <v-flex xs12 :md2="type == 'image'" :key="image" v-for="(image, index) in items" :class="{'px-1 py-1': type == 'image'}">
+                        <v-card :flat="type != 'image'">
+                            <v-card-media v-show="type == 'image'":src="fullPath(image)" height="100px"></v-card-media>
+                            <v-card-actions :class="{'py-0': type != 'image' }">
+                                <v-card-title v-show="type != 'image'" class="px-0 py-0"><a :href="fullPath(image)" download>{{ image }}</a></v-card-title>
+                                <v-spacer></v-spacer>
+                                <v-tooltip top>
+                                    <v-btn icon slot="activator"
+                                           @click="deleteImage(index)" class="my-0"
+                                    >
+                                        <v-icon color="red">clear</v-icon>
+                                    </v-btn>
+                                    <span>{{ l18n('delete') }}</span>
+                                </v-tooltip>
+                            </v-card-actions>
+                        </v-card>
+                    </v-flex>
+                </v-layout>
+            </v-flex>
+        </v-layout>
+
+        <v-layout v-else row align-center>
             <v-text-field
                     hide-details
                     class="px-0 py-0"
@@ -55,15 +94,14 @@
                 <v-card-text >
                     <v-layout row wrap>
                         <v-flex xs12 :md3="type == 'image'" :key="image" v-for="(image, index) in itemsDialog.items" class="px-1 py-1">
-                            <v-card >
-
+                            <v-card :flat="type != 'image'">
                                 <v-card-media v-show="type == 'image'":src="fullPath(image)" height="200px"></v-card-media>
-                                <v-card-actions>
-                                    <v-card-title v-show="type != 'image'"><a :href="fullPath(image)" target="_blank">{{ image }}</a></v-card-title>
+                                <v-card-actions :class="{'py-0': type != 'image' }">
+                                    <v-card-title v-show="type != 'image'" class="px-0 py-0"><a :href="fullPath(image)" download>{{ image }}</a></v-card-title>
                                     <v-spacer></v-spacer>
                                     <v-tooltip top>
                                         <v-btn icon slot="activator"
-                                               @click="deleteImage(index)" class="my-0"
+                                               @click="deleteDialogImage(index)" class="my-0"
                                         >
                                             <v-icon color="red">clear</v-icon>
                                         </v-btn>
@@ -113,6 +151,9 @@
             }
         },
         computed: {
+            collapsed(){
+                return (this.field.additional && this.field.additional.collapsed);
+            },
             mode(){
                 return (this.field.additional && this.field.additional.mode) ?  this.field.additional.mode : 'multi';
             },
@@ -210,9 +251,14 @@
                 AdminManager.mountComponent( libraryComponent, false );
             },
 
-            deleteImage(index){
+            deleteDialogImage(index){
 
                 this.itemsDialog.items.splice(index, 1);
+            },
+
+            deleteImage(index){
+
+                this.items.splice(index, 1);
             },
 
             clearItems(){
