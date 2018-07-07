@@ -7,6 +7,9 @@ let token = document.head.querySelector('meta[name="csrf-token"]');
 
 window.CSRF_TOKEN = token.content;
 
+import tinymce from 'tinymce/tinymce';
+window.tinymce = tinymce;
+
 if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 } else {

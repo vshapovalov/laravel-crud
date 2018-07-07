@@ -94,7 +94,7 @@ export default class Utils {
             field.type === FieldTypes.RICHEDIT ||
             field.type === FieldTypes.TEXTBOX ||
             field.type === FieldTypes.IMAGE )
-            return "";
+            return '';
 
         if (field.type === FieldTypes.CHECKBOX )
             return 0;

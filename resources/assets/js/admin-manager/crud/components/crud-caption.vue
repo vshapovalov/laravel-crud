@@ -8,13 +8,13 @@
         <span v-else-if="fieldType === fieldTypes.CHECKBOX ">{{ (fieldValue && (fieldValue != 0)) ? "Да" : "Нет" }}</span>
         <span v-else-if="fieldType === fieldTypes.DROPDOWN">{{ fieldValue }}</span>
         <span v-else-if="fieldType === fieldTypes.RELATION && (field.relation.type === relationTypes.BELONGS_TO || field.relation.type === relationTypes.HAS_ONE)">
-            {{ !field.json ? ( item[field.name] ? getDisplayValue(getCrud(field.relation.crud.code)['display'], item[field.name]) : '') : item[field.name] }}
+            {{ !field.json ? ( item[field.name] ? getDisplayValue(relationCrud['display'], item[field.name]) : '') : item[field.name] }}
         </span>
         <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.HAS_MANY">
-            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud.code)['display']] }}</span>
+            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[relationCrud['display']] }}</span>
         </span>
         <span v-else-if="fieldType === fieldTypes.RELATION && field.relation.type === relationTypes.BELONGS_TO_MANY">
-            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[getCrud(field.relation.crud.code)['display']] }}</span>
+            <span class="" v-for="(relationItem, index) in item[toSnakeCase(field.name)]">{{ (index > 0) ? ',' : '' }} {{ relationItem[relationCrud['display']] }}</span>
         </span>
         <span v-else-if="fieldType === fieldTypes.IMAGE">
             <span v-if="!field.additional || (field.additional && field.additional.mode === 'single')">
@@ -49,11 +49,12 @@
             item: { }
         },
         data: function () {
-            return {
-                relatedCrud: null
-            }
+            return { }
         },
         computed: {
+            relationCrud(){
+                return this.field.relation ? AdminManager.getCrud(this.field.relation.crud.code) : null;
+            },
             baseUrl(){
                 return App.baseUrl;
             },
@@ -146,14 +147,6 @@
                 else
                     return [];
 
-            },
-            getCrud(crudCode){
-
-                if (!this.relatedCrud){
-                    this.relatedCrud = AdminManager.getCrud(crudCode);
-                }
-
-                return this.relatedCrud;
             }
         }
     }
