@@ -1,7 +1,5 @@
 <template>
-    <div class="media-library fill-height"
-         :style="{'z-index': options.isModal ? 100000 : 'inherite'}"
-    >
+    <div class="media-library fill-height">
         <v-layout column fill-height>
             <v-flex>
                 <v-toolbar v-if="options.isModal" card flat dense color="primary">
@@ -772,7 +770,9 @@
                 }
             }
 
-             this.dz = new Dropzone(
+            let _this = this;
+
+            this.dz = new Dropzone(
                 document.getElementById('upload'),
                 {
                     url: CrudUrls.media.UPLOAD,
@@ -819,13 +819,13 @@
                     },
                     success: function(e, res){
                         if(res.success){
-                            AdminManager.showSuccess(this.l18n('uploaded') + ': ' + res.message);
+                            AdminManager.showSuccess(_this.l18n('uploaded') + ': ' + res.message);
                         } else {
-                            AdminManager.showError(this.l18n('action_error') + ': ' + res.message);
+                            AdminManager.showError(_this.l18n('action_error') + ': ' + res.message);
                         }
                     },
                     error: function(e, res, xhr){
-                        AdminManager.showError(this.l18n('action_error') + ': ' + e);
+                        AdminManager.showError(_this.l18n('action_error') + ': ' + e);
                     },
                     queuecomplete: ()=>{
                         this.getItems();

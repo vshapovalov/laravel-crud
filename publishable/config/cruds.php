@@ -17,5 +17,9 @@ return
                 "info" => "#2196f3",
                 "success" => "#4caf50"
             ]
-        ]
+        ],
+		"tinymce" => [
+			"content_css" => "",
+			"style_formats" => [ ]
+		]
 	];

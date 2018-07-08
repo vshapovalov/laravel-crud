@@ -33,7 +33,8 @@
                 name: "{{ config('cruds.theme.name') }}",
                 colors: {!! json_encode( config('cruds.theme.colors') ) !!}
             },
-            l18n: {!! json_encode( __('cruds') ) !!}
+            l18n: {!! json_encode( __('cruds') ) !!},
+            tinymce: {!! json_encode( config('cruds.tinymce') ) !!}
         };
 
 

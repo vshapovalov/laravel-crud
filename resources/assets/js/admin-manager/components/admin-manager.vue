@@ -86,6 +86,8 @@
                                 hide-overlay
                                 transition="dialog-bottom-transition"
                                 scrollable
+                                :style="component.options.style"
+                                :content-class="component.options.class"
                         >
                             <v-card flat class="px-0 py-0">
                                 <div :is="component.name" :options="component.options"></div>
