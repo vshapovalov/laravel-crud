@@ -259,6 +259,7 @@
             deleteImage(index){
 
                 this.items.splice(index, 1);
+                this.emitChange();
             },
 
             clearItems(){
