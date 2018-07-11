@@ -16,36 +16,7 @@ if (token) {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }
 
-import each from 'lodash/each';
-import sortBy from 'lodash/sortBy';
-import filter from 'lodash/filter';
-import findIndex from 'lodash/findIndex';
-import first from 'lodash/first';
-import snakeCase from 'lodash/snakeCase';
-import find from 'lodash/find';
-import map from 'lodash/map';
-import cloneDeep from 'lodash/cloneDeep';
-import includes from 'lodash/includes';
-import isString from 'lodash/isString';
-import keys from 'lodash/keys';
-import groupBy from 'lodash/groupBy';
-import uniqBy from 'lodash/uniqBy';
-import uniq from 'lodash/uniq';
-import some from 'lodash/some';
-import lowerCase from 'lodash/lowerCase';
-import has from 'lodash/has';
-import get from 'lodash/get';
-import split from 'lodash/split';
-import endsWith from 'lodash/endsWith';
-import orderBy from 'lodash/orderBy';
-import values from 'lodash/values';
-
-window._ = {
-    each, sortBy, filter, findIndex, first, snakeCase,
-    find, map, cloneDeep, isString, keys, groupBy, uniqBy, some,
-    lowerCase, values, has, get, split, endsWith, orderBy, uniq,
-    includes
-};
+window._ = require('lodash');
 
 window.dropzone = require('dropzone');
 
