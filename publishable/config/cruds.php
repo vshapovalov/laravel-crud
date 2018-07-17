@@ -5,7 +5,12 @@ return
 		'crud_prefix' => 'cruds',
 		'media_prefix' => 'media',
 		'media_default_settings' => [ ],
-		'components' => [ ],
+		'components' => [
+			[
+				'name' => 'dashboard-components',
+				'path' => '/vendor/vshapovalov/crud/assets/js/dashboard-components.js'
+			]
+		],
         "theme" => [
             "name" => "light",
             "colors" => [

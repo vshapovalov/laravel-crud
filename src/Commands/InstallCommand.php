@@ -78,7 +78,7 @@ class InstallCommand extends Command
 	    $process = new Process($composer.' dump-autoload');
 	    $process->setWorkingDirectory(base_path())->run();
 
-	    $this->info('Adding Voyager routes to routes/web.php');
+	    $this->info('Adding crud routes to routes/web.php');
 
 	    $routes_contents = $filesystem->get(base_path('routes/web.php'));
 

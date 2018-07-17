@@ -18,8 +18,8 @@ class CrudFormsTableSeeder extends Seeder
 
 	    $role->code = 'admin';
 	    $role->name = 'Администратор';
+	    $role->is_admin = 1;
 	    $role->save();
-
 
 	    $user = new \App\User();
 	    $user->name = 'admin';
@@ -28,8 +28,6 @@ class CrudFormsTableSeeder extends Seeder
 	    $user->save();
 
 	    DB::table('user_role')->insert(['role_id' => $role->id, 'user_id' => $user->id]);
-
-	    /******************* crud forms ******************/
 
 	    $formUser = new \Vshapovalov\Crud\Models\CrudForm();
 	    $formUser->name = 'Пользователи';
@@ -993,6 +991,22 @@ class CrudFormsTableSeeder extends Seeder
 					'columns' => 6
 				],
 				[
+					'name' => 'is_admin',
+					'caption' => 'Администратор',
+					'type' => 'checkbox',
+					'visibility' => '[ "edit", "add" ]',
+					'by_default' => '0',
+					'json' => 0,
+					'readonly' => 0,
+					'description' => null,
+					'tab' => 'Основные параметры',
+					'validation' => 'required',
+					'additional' => null,
+					'crud_relation_id' => null,
+					'order' => 2,
+					'columns' => 6
+				],
+				[
 					'name' => 'users',
 					'caption' => 'Пользователи',
 					'type' => 'relation',
@@ -1005,7 +1019,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => null,
 					'additional' => null,
 					'crud_relation_id' => $relationUser->id,
-					'order' => 2,
+					'order' => 10,
 					'columns' => 12
 				],
 				[
@@ -1021,7 +1035,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => null,
 					'additional' => null,
 					'crud_relation_id' => $relationCrudMenuBTM->id,
-					'order' => 3,
+					'order' => 20,
 					'columns' => 12
 				],
 				[
@@ -1037,7 +1051,7 @@ class CrudFormsTableSeeder extends Seeder
 					'validation' => null,
 					'additional' => '{ buttons: ["pick", "delete_all"] }',
 					'crud_relation_id' => $relationCrudFormForRoles->id,
-					'order' => 4,
+					'order' => 30,
 					'columns' => 12
 				]
 			]
@@ -1356,6 +1370,16 @@ class CrudFormsTableSeeder extends Seeder
 	    $menu->name = 'crudforms';
 	    $menu->caption = 'CRUD формы';
 	    $menu->action = 'crud:crudforms:mount';
+	    $menu->default = 0;
+	    $menu->parent_id = $systemMenu->id;;
+	    $menu->order = 1;
+	    $menu->status = 'enabled';
+	    $menu->save();
+
+	    $menu = new \Vshapovalov\Crud\Models\CrudMenu();
+	    $menu->name = 'fastcrud';
+	    $menu->caption = 'Fast crud';
+	    $menu->action = 'user:fast-crud:mount';
 	    $menu->default = 0;
 	    $menu->parent_id = $systemMenu->id;;
 	    $menu->order = 1;

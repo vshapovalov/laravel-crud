@@ -5,6 +5,7 @@ namespace Vshapovalov\Crud;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Vshapovalov\Crud\Models\AdminSetting;
 use Vshapovalov\Crud\Models\MenuItem;
@@ -20,6 +21,7 @@ class Crud {
 
 	protected $settings = null;
 	protected $menuItems = null;
+	protected $isUserAdmin = null;
 
 	function __construct() {
 		$this->config = config('cruds');
@@ -34,6 +36,100 @@ class Crud {
 
 		return $cruds;
 
+	}
+
+	public function isUserAdmin(){
+
+		if ( $this->isUserAdmin != null) {
+
+			return $this->isUserAdmin;
+		} else {
+
+			return $this->isUserAdmin = app()->runningInConsole()
+			                            ||  Role::where('is_admin', 1)->whereHas('users', function($q){
+											return $q->where('id', '=', auth()->user()->id );
+										})->first();
+		}
+	}
+
+	public function getTables(){
+
+		$schema = \DB::getDoctrineSchemaManager();
+
+		$result = array_map(function($table){
+
+			$resultTable = [];
+
+			$resultTable['name'] = $table->getName();
+			$resultTable['model'] = 'App\\' . studly_case( str_singular($resultTable['name']) );
+
+			$resultTable['columns'] = array_values( array_map(function($column){
+
+				return [
+					'name' => $column->getName(),
+					'type' => $column->getType()->getName(),
+					'length' => $column->getLength(),
+					'precision' => $column->getPrecision(),
+					'scale' => $column->getScale(),
+					'not_null' => $column->getNotNull(),
+					'default' => $column->getDefault(),
+				];
+
+			}, $table->getColumns()));
+
+
+			return $resultTable;
+
+		}, $schema->listTables());
+
+		return $result;
+	}
+
+	public function createForm($form){
+
+		if (app()->runningInConsole() || $this->isUserAdmin()){
+
+			$formModel = new CrudForm();
+			$formModel->name = $form['name'];
+			$formModel->code = $form['code'];
+			$formModel->model = $form['model'];
+			$formModel->id = $form['id'];
+			$formModel->display = $form['display'];
+			$formModel->type = $form['type'];
+			$formModel->save();
+
+			if ( isset($form['fields']) && count($form['fields'])){
+				$form['fields'] = array_map( function($f){
+
+					$f['visibility'] = json_encode( $f['visibility'] );
+
+					return $f;
+				}, $form['fields'] );
+
+				$formModel->fields()->createMany( $form['fields'] );
+
+			}
+
+
+			if ( isset($form['scopes']) && count($form['scopes']))
+				$formModel->scopes()->createMany( $form['scopes'] );
+
+			$menuModel = new CrudMenu();
+			$menuModel->name = $form['code'];
+			$menuModel->caption = $form['name'];
+			$menuModel->action = 'crud:' . $form['code'] . ':mount';
+			$menuModel->default = 0;
+			$menuModel->parent_id = null;
+			$menuModel->order = 0;
+			$menuModel->status = 'enabled';
+			$menuModel->save();
+
+
+
+			return $formModel;
+		}
+
+		return null;
 	}
 
 	public function routes()
@@ -354,19 +450,34 @@ class Crud {
 		return $qb->get();
 	}
 
+	function createModelFromDummy( $modelClass ){
+
+		$parts = explode('\\', $modelClass);
+
+		$className = $parts[ count($parts) - 1];
+
+		unset($parts[ count($parts) - 1]);
+
+		$namespace = implode('\\', $parts);
+
+		if (!file_exists( base_path('/app/' . $className. '.php') )) {
+
+			$file = file_get_contents( __DIR__ . '/Models/DummyModel.template' );
+
+			$file = str_replace('[NAMESPACE]', $namespace, $file);
+			$file = str_replace('[CLASS_NAME]', $className, $file);
+
+			file_put_contents( base_path('/app/' . $className. '.php'), $file );
+		}
+	}
+
 	function deleteCrudItem($crud, $id){
 		if (is_string($crud))
             $crud = $this->getCrudByCode($crud);
 
-        $model = $this->getModelByCrud($crud, $id, false);
-        $model->delete();
-
-		if (isset($crud['type']) && $crud['type'] == 'tree'){
-
-			call_user_func($crud['model']."::where", 'path', 'like',
-				'%'.str_pad($id, 4, '0', STR_PAD_LEFT) . ';%')->delete();
-		}
-
+        if ($model = $this->getModelByCrud($crud, $id, false) ) {
+	        $model->delete();
+        }
 	}
 
 	/**

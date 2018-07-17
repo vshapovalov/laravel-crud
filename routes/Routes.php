@@ -1,5 +1,7 @@
 <?php
 
+
+
 Route::group(['as' => 'media.', 'prefix' => config('cruds.media_prefix')], function(){
 
 	$namespacePrefix = '\\Vshapovalov\\Crud\\Http\\Controllers\\';
@@ -11,7 +13,6 @@ Route::group(['as' => 'media.', 'prefix' => config('cruds.media_prefix')], funct
 	Route::post('folder/new', ['as' => 'newfolder', 'uses' => $namespacePrefix.'MediaController@newFolder']);
 	Route::post('folder/rename', ['as' => 'renamefolder', 'uses' => $namespacePrefix.'MediaController@renameFolder']);
     Route::post('crop', ['as' => 'crop', 'uses' => $namespacePrefix.'MediaController@cropImage']);
-
 });
 
 Route::group(['namespace' => '\\Vshapovalov\\Crud\\Http\\Controllers', 'as' => 'cruds.', 'prefix' => config('cruds.crud_prefix')], function(){
@@ -22,11 +23,23 @@ Route::group(['namespace' => '\\Vshapovalov\\Crud\\Http\\Controllers', 'as' => '
 	Route::get('config', ['uses' => $namespacePrefix.'CrudController@getCrudConfig']);
 	Route::get('list', ['uses' => $namespacePrefix.'CrudController@getCrudList']);
 	Route::get('menu/list', ['uses' => $namespacePrefix.'CrudController@getMenuList']);
-	Route::get('{code}/test', ['uses' => $namespacePrefix.'CrudController@getItemsListTest']);
+
+	Route::group(['as' => 'extra.', 'prefix' => 'extra'], function() use ($namespacePrefix){
+		Route::get('tables', ['uses' => $namespacePrefix.'FastCrudController@getTables']);
+		Route::get('forms', ['uses' => $namespacePrefix.'FastCrudController@getForms']);
+		Route::post('forms', ['uses' => $namespacePrefix.'FastCrudController@addForm']);
+	});
+
 	Route::post('{code}/items', ['uses' => $namespacePrefix.'CrudController@getItemsList']);
 	Route::get('{code}/get', ['uses' => $namespacePrefix.'CrudController@getItemsList']);
 	Route::get('{code}/{id}', ['uses' => $namespacePrefix.'CrudController@getItem']);
 	Route::post('{code}/edit', ['uses' => $namespacePrefix.'CrudController@updateItem']);
 	Route::post('{code}/delete/{id}', ['uses' => $namespacePrefix.'CrudController@deleteItem']);
 	Route::post('{code}/bulk/update', ['uses' => $namespacePrefix.'CrudController@bulkUpdateItems']);
+
+
+
+
+
+
 });

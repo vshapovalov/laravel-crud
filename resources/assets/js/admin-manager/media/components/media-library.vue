@@ -278,11 +278,13 @@
                 scrollable
         >
             <v-card>
-                <v-toolbar card>
+                <v-toolbar card color="primary">
+                    <v-btn icon v-show="!hasCropperSetting" @click="cancelCropDialog">
+                        <v-icon>clear</v-icon>
+                    </v-btn>
                     <v-toolbar-title>{{ l18n('edit') }}</v-toolbar-title>
                     <v-spacer></v-spacer>
                     <v-btn color="success" @click="submitCropDialog">{{ l18n('save') }}</v-btn>
-                    <v-btn color="red" flat v-show="!hasCropperSetting" @click="cancelCropDialog">{{ l18n('cancel') }}</v-btn>
                 </v-toolbar>
                 <v-card-text v-show="!hasCropperSetting" class="text-xs-center px-0 py-1" style="flex-shrink: 0;">
                     <v-btn flat @click="setCropperAspect( 16 / 6 )">16:9</v-btn>

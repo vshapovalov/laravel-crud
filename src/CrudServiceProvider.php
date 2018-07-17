@@ -4,6 +4,7 @@ namespace Vshapovalov\Crud;
 
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
+use Vshapovalov\Crud\Commands\CreateCommand;
 use Vshapovalov\Crud\Commands\InstallCommand;
 use Vshapovalov\Crud\Facades\Crud as CrudFacade;
 
@@ -44,6 +45,7 @@ class CrudServiceProvider extends ServiceProvider
 
     function registerConsoleCommands(){
     	$this->commands(InstallCommand::class);
+	    $this->commands(CreateCommand::class);
     }
 
 	/**
