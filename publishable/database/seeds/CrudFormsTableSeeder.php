@@ -1313,6 +1313,7 @@ class CrudFormsTableSeeder extends Seeder
 	    $menu->default = 0;
 	    $menu->parent_id = null;
 	    $menu->order = 1;
+	    $menu->icon = 'photo_library';
 	    $menu->status = 'enabled';
 	    $menu->save();
 
@@ -1323,6 +1324,7 @@ class CrudFormsTableSeeder extends Seeder
 	    $systemMenu->default = 0;
 	    $systemMenu->parent_id = null;
 	    $systemMenu->order = 2;
+	    $menu->icon = 'settings';
 	    $systemMenu->status = 'enabled';
 	    $systemMenu->save();
 
@@ -1393,6 +1395,7 @@ class CrudFormsTableSeeder extends Seeder
 	    $menu->default = 0;
 	    $menu->parent_id = null;
 	    $menu->order = 1;
+	    $menu->icon = 'settings_applications';
 	    $menu->status = 'enabled';
 	    $menu->save();
 
@@ -1402,6 +1405,7 @@ class CrudFormsTableSeeder extends Seeder
 	    $menu->action = 'crud:users:mount';
 	    $menu->default = 0;
 	    $menu->parent_id = null;
+	    $menu->icon = 'account_box';
 	    $menu->order = 1;
 	    $menu->status = 'enabled';
 	    $menu->save();
@@ -1411,7 +1415,8 @@ class CrudFormsTableSeeder extends Seeder
 	    $menu->caption = 'Роли';
 	    $menu->action = 'crud:roles:mount';
 	    $menu->default = 0;
-	    $menu->parent_id = null;
+	    $menu->parent_id = $systemMenu->id;
+	    $menu->icon = 'perm_identity';
 	    $menu->order = 1;
 	    $menu->status = 'enabled';
 	    $menu->save();

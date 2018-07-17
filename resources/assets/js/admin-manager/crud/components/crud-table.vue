@@ -162,12 +162,16 @@
                 return (field.type === FieldTypes.TEXTAREA) || (field.type === FieldTypes.TEXTBOX)
                     || (field.type === FieldTypes.COLORBOX) || (field.type === FieldTypes.DATEPICKER);
             },
-
+            emitSelect(){
+                this.$emit("select", _.filter(this.items, (i) => i.isSelected ));
+            },
             changePreparedSelected(isSelected){
 
                 _.each(this.preparedItems, (i)=>{
                     i.isSelected = isSelected;
                 });
+
+                this.emitSelect();
             },
 
             selectItem(item){
@@ -183,7 +187,7 @@
 
                     this.$set(item, 'isSelected', !item.isSelected);
 
-                    this.$emit("select", _.filter(this.items, (i) => i.isSelected ));
+                    this.emitSelect();
                 }
             },
 
