@@ -40,7 +40,7 @@
 
     </script>
 
-    <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js?140') }}"></script>
+    <script src="{{ url('vendor/vshapovalov/crud/assets/js/admin.js?143') }}"></script>
 @show
 </body>
 </html>

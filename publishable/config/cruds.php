@@ -8,7 +8,7 @@ return
 		'components' => [
 			[
 				'name' => 'dashboard-components',
-				'path' => '/vendor/vshapovalov/crud/assets/js/dashboard-components.js'
+				'path' => '/vendor/vshapovalov/crud/assets/js/dashboard-components.js?143'
 			]
 		],
         "theme" => [
