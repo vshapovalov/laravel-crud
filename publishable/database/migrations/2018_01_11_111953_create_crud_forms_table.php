@@ -15,12 +15,12 @@ class CreateCrudFormsTable extends Migration
     {
         Schema::create('crud_forms', function (Blueprint $table) {
 	        $table->increments('sur_id');
-	        $table->string('name', 191)-;
+	        $table->string('name', 191);
 	        $table->string('code', 191);
 	        $table->string('model', 191);
 	        $table->string('id', 191);
 	        $table->string('display', 191);
-	        $table->string('type', 191)->default('list')->;
+	        $table->string('type', 191)->default('list');
             $table->timestamps();
         });
     }
