@@ -808,7 +808,7 @@
 
                                 this.cropper.replace(objectUrl);
 
-                                this.showCrop(()=>{
+                                this.showCropDialog(()=>{
 
                                     files[0].cropData = this.cropper.getData(true);
 
