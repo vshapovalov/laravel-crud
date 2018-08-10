@@ -5,6 +5,7 @@ namespace Vshapovalov\Crud\Http\Controllers;
 use Illuminate\Http\File;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
@@ -26,6 +27,19 @@ class MediaController extends BaseController
         $width = $image->getWidth();
 
         $quality = null;
+
+		if (isset($options['crop'])){
+
+			if (!isset($options['crop']['x'])) $options['crop']['x'] = null;
+			if (!isset($options['crop']['y'])) $options['crop']['y'] = null;
+
+			$image->crop(
+				$options['crop']['width'],
+				$options['crop']['height'],
+				$options['crop']['x'],
+				$options['crop']['y']
+			);
+		}
 
         if (isset($options['resize'])){
 
@@ -52,19 +66,6 @@ class MediaController extends BaseController
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 }
-            );
-        }
-
-        if (isset($options['crop'])){
-
-            if (!isset($options['crop']['x'])) $options['crop']['x'] = null;
-            if (!isset($options['crop']['y'])) $options['crop']['y'] = null;
-
-            $image->crop(
-                $options['crop']['width'],
-                $options['crop']['height'],
-                $options['crop']['x'],
-                $options['crop']['y']
             );
         }
 
@@ -127,7 +128,6 @@ class MediaController extends BaseController
 			    //cropper.js data
                 $this->settings['crop'] = json_decode(request('crop_data'), true);
             }
-
 
 			if (in_array($ext, $this->fileTypes) && count($this->settings)){
 

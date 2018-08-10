@@ -275,9 +275,8 @@
                 fullscreen
                 hide-overlay
                 transition="dialog-bottom-transition"
-                scrollable
         >
-            <v-card>
+            <v-card >
                 <v-toolbar card color="primary">
                     <v-btn icon v-show="!hasCropperSetting" @click="cancelCropDialog">
                         <v-icon>clear</v-icon>
@@ -293,8 +292,8 @@
                     <v-btn flat @click="setCropperAspect( 2 / 3 )">2:3</v-btn>
                     <v-btn flat @click="setCropperAspect( 'free' )">{{ l18n('free_size') }}</v-btn>
                 </v-card-text>
-                <v-container fluid class="px-0 py-0">
-                    <img ref="cropper" >
+                <v-container fluid class="px-0 py-0" style="max-width: 100%; max-height: calc(100vh - 64px)">
+                    <img ref="cropper" style="max-width: 100%;">
                 </v-container>
             </v-card>
         </v-dialog>
@@ -758,7 +757,8 @@
 
             this.cropper = new Cropper(this.$refs.cropper, {
                 viewMode: 1,
-                dragMode: "move"
+                dragMode: "move",
+                responsive: true
             });
 
             if (this.hasCropperSetting)
