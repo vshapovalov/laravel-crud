@@ -308,7 +308,11 @@ class Crud {
 				array_filter( $crud['fields'], function($f){
 					return $f['type'] == 'relation'
 					       && ( !$f['json'] )
-					       && ( in_array('edit', $f['visibility']) || count($f['visibility']) == 0);
+					       && (
+					       	in_array('edit', $f['visibility'])
+					        || in_array('hidden', $f['visibility'])
+					        || count($f['visibility']) == 0
+					       );
 				})
 			);
 
