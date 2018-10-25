@@ -120,7 +120,7 @@
 
                         this.changeItem(_.first(items));
                     };
-                    component.options.getItem = ()=> this.item ;
+                    component.options.item = this.item;
                     component.options.close = ()=> AdminManager.unmountComponent( component ) ;
                     component.options.isModal = true;
 
