@@ -14,8 +14,8 @@ class CreateCrudFieldsTable extends Migration
     public function up()
     {
         Schema::create('crud_fields', function (Blueprint $table) {
-            $table->increments('id');
-	        $table->integer('crud_form_id')->unsigned()->nullable();
+            $table->bigIncrements('id');
+	        $table->bigInteger('crud_form_id')->unsigned()->nullable();
 	        $table->string('name', 191);
 	        $table->string('caption', 191);
 	        $table->string('type', 191);
@@ -29,7 +29,7 @@ class CreateCrudFieldsTable extends Migration
 	        $table->text('additional')->nullable();
 	        $table->integer('order')->default(0);
 	        $table->integer('columns')->default(12);
-	        $table->integer('crud_relation_id')->unsigned()->nullable();
+	        $table->bigInteger('crud_relation_id')->unsigned()->nullable();
             $table->timestamps();
         });
     }

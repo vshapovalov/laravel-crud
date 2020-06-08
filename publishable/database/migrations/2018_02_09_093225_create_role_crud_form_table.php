@@ -14,14 +14,14 @@ class CreateRoleCrudFormTable extends Migration
     public function up()
     {
         Schema::create('role_crud_form', function (Blueprint $table) {
-	        $table->integer('role_id')->unsigned();
+	        $table->bigInteger('role_id')->unsigned();
 
 	        $table->foreign('role_id', 'role_crud_form_role_id_foreign')
 	              ->references('id')
 	              ->on('roles')
 	              ->onDelete('cascade');
 
-	        $table->integer('crud_form_id')->unsigned();
+	        $table->bigInteger('crud_form_id')->unsigned();
 
             $table->integer('select')->default(1);
 	        $table->integer('add')->default(1);

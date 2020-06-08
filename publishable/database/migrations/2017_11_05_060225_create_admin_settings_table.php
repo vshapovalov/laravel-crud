@@ -14,10 +14,10 @@ class CreateAdminSettingsTable extends Migration
     public function up()
     {
         Schema::create('admin_settings', function (Blueprint $table) {
-            $table->increments('id');
+            $table->bigIncrements('id');
             $table->string('name', 191);
 	        $table->string('key', 191);
-	        $table->integer('admin_setting_group_id')
+	        $table->bigInteger('admin_setting_group_id')
 	              ->unsigned()
 	              ->nullable();
 
