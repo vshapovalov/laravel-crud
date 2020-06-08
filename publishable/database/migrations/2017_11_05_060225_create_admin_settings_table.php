@@ -25,7 +25,7 @@ class CreateAdminSettingsTable extends Migration
 	              ->references('id')
 	              ->on('admin_setting_groups');
 
-	        $table->integer('crud_field_type_id')
+	        $table->bigInteger('crud_field_type_id')
 	              ->unsigned()
 	              ->nullable();
 

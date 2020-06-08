@@ -18,7 +18,7 @@ class CreateMenuItemsTable extends Migration
 	        $table->string('title', 191);
 	        $table->string('code', 191)->nullable();
 	        $table->string('url', 191)->nullable();
-	        $table->integer('parent_id')->unsigned()->nullable();
+	        $table->bigInteger('parent_id')->unsigned()->nullable();
 	        $table->integer('order')->default(1);
             $table->timestamps();
         });
