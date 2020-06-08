@@ -75,7 +75,9 @@ class InstallCommand extends Command
 
 	    $composer = $this->findComposer();
 
-	    $process = new Process($composer.' dump-autoload');
+	    $this->info("Composer command: ${$composer}");
+
+	    $process = new Process([$composer, 'dump-autoload']);
 	    $process->setWorkingDirectory(base_path())->run();
 
 	    $this->info('Adding crud routes to routes/web.php');

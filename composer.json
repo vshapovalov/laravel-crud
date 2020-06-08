@@ -10,8 +10,7 @@
         }
     ],
     "require": {
-        "illuminate/support": "^5.4",
-        "intervention/image": "^2.4"
+        "intervention/image": "2.5.1"
     },
     "autoload": {
         "psr-4": {

@@ -3,10 +3,12 @@
 namespace Vshapovalov\Crud;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Vshapovalov\Crud\Models\AdminSetting;
 use Vshapovalov\Crud\Models\MenuItem;
 use Vshapovalov\Crud\Models\CrudForm;
@@ -39,54 +41,54 @@ class Crud {
 	}
 
 	public function isUserAdmin(){
-
-		if ( $this->isUserAdmin != null) {
-
+		if ( $this->isUserAdmin !== null) {
 			return $this->isUserAdmin;
 		} else {
-
-			return $this->isUserAdmin = app()->runningInConsole()
-			                            ||  Role::where('is_admin', 1)->whereHas('users', function($q){
-											return $q->where('id', '=', auth()->user()->id );
-										})->first();
+			return $this->isUserAdmin =
+                (app()->runningInConsole() ||
+                    Role::where('is_admin', 1)
+                        ->whereHas(
+                            'users',
+                            function ($q) {
+                                return $q->where('id', '=', auth()->user()->id);
+                            }
+                        )
+                        ->first());
 		}
 	}
 
-	public function getTables(){
+	public function getTables(): array
+    {
+		$schema = DB::getDoctrineSchemaManager();
+		return array_map(
+		    static function($table) {
+                $resultTable['name'] = $table->getName();
+                $resultTable['model'] = 'App\\' . Str::studly(Str::singular($resultTable['name']));
 
-		$schema = \DB::getDoctrineSchemaManager();
-
-		$result = array_map(function($table){
-
-			$resultTable = [];
-
-			$resultTable['name'] = $table->getName();
-			$resultTable['model'] = 'App\\' . studly_case( str_singular($resultTable['name']) );
-
-			$resultTable['columns'] = array_values( array_map(function($column){
-
-				return [
-					'name' => $column->getName(),
-					'type' => $column->getType()->getName(),
-					'length' => $column->getLength(),
-					'precision' => $column->getPrecision(),
-					'scale' => $column->getScale(),
-					'not_null' => $column->getNotNull(),
-					'default' => $column->getDefault(),
-				];
-
-			}, $table->getColumns()));
-
-
-			return $resultTable;
-
-		}, $schema->listTables());
-
-		return $result;
+                $resultTable['columns'] = array_values(
+                    array_map(
+                        static function($column){
+                            return [
+                                'name' => $column->getName(),
+                                'type' => $column->getType()->getName(),
+                                'length' => $column->getLength(),
+                                'precision' => $column->getPrecision(),
+                                'scale' => $column->getScale(),
+                                'not_null' => $column->getNotNull(),
+                                'default' => $column->getDefault(),
+                            ];
+                        },
+                        $table->getColumns()
+                    )
+                );
+                return $resultTable;
+		    },
+            $schema->listTables()
+        );
 	}
 
-	public function createForm($form){
-
+	public function createForm($form): ?CrudForm
+    {
 		if (app()->runningInConsole() || $this->isUserAdmin()){
 
 			$formModel = new CrudForm();
@@ -138,7 +140,6 @@ class Crud {
 	}
 
 	function loadSettings(){
-
 		$this->settings = AdminSetting::with('adminSettingGroup' )->get()->toArray();
 	}
 
@@ -152,7 +153,7 @@ class Crud {
 
 		foreach ($cruds as &$crud){
 			foreach($crud['fields'] as &$field){
-				if (isset($field['by_default']) && (str_contains($field['by_default'], 'callback::')) ){
+				if (isset($field['by_default']) && (Str::contains($field['by_default'], 'callback::')) ){
 
 					$struct = explode('::', $field['by_default']);
 
@@ -212,22 +213,37 @@ class Crud {
 
 	function loadCrudMenu(){
 
-		$roles = Role::whereHas('users', function($q){
-			$q->where('id', '=', Auth::user()->id);
-		})->get()->pluck('id');
+		$roles = Role::whereHas(
+                'users',
+                static function($q){
+                    $q->where('id', '=', Auth::user()->id);
+                }
+		    )
+            ->get()
+            ->pluck('id');
 
-		$menuItems = CrudMenu::with('items')->where('status','enabled')->whereHas('roles', function($q) use ($roles){
-			$q->whereIn('id', $roles);
-		})->orDoesntHave('roles')->get()->toArray();
+		$menuItems = CrudMenu::with('items')
+            ->where('status','enabled')
+            ->whereHas(
+                'roles',
+                static function($q) use ($roles) {
+			        $q->whereIn('id', $roles);
+		        }
+		    )
+            ->orDoesntHave('roles')
+            ->get()
+            ->toArray();
 
 		$keyedItems = [];
 
-		array_walk($menuItems, function($item) use (&$keyedItems){
-			$keyedItems[ $item['id'] ] = $item;
-		});
+		array_walk(
+		    $menuItems,
+            static function($item) use (&$keyedItems){
+			    $keyedItems[ $item['id'] ] = $item;
+		    }
+		);
 
-		foreach ($keyedItems as &$item){
-
+		foreach($keyedItems as $item) {
 			if (!empty($item['parent_id']) && isset($keyedItems[ $item['parent_id'] ])) {
 				$keyedItems[ $item['parent_id'] ]['items'][] = $item;
 			}
@@ -235,10 +251,14 @@ class Crud {
 
 		$menu = [];
 
-		array_walk($keyedItems, function($item) use (&$menu){
-			if ( empty($item['parent_id']))
-				$menu[] = $item;
-		});
+		array_walk(
+		    $keyedItems,
+            static function($item) use (&$menu){
+                if (empty($item['parent_id'])) {
+                    $menu[] = $item;
+                }
+		    }
+		);
 
 		$this->menu = $menu;
 
@@ -283,7 +303,7 @@ class Crud {
 					$relationships[$method->getName()] = [
 						'type' => (new \ReflectionClass($return))->getShortName(),
 						'model' => (new \ReflectionClass($return->getRelated()))->getName(),
-						'foreign_key' => ((new \ReflectionClass($return))->getShortName() == 'HasMany') ? $return->getExistenceCompareKey() : ''
+						'foreign_key' => ((new \ReflectionClass($return))->getShortName() === 'HasMany') ? $return->getExistenceCompareKey() : ''
 					];
 				}
 			} catch(\ErrorException $e) {}
@@ -306,7 +326,7 @@ class Crud {
 				function($f){ return $f['name']; },
 
 				array_filter( $crud['fields'], function($f){
-					return $f['type'] == 'relation'
+					return $f['type'] === 'relation'
 					       && ( !$f['json'] )
 					       && (
 					       	in_array('edit', $f['visibility'])
@@ -368,7 +388,7 @@ class Crud {
 
 			[$group, $code] = explode('.', $settingCode);
 
-			return array_first($this->settings, function($settingCode, $key) use ($group, $code){
+			return Arr::first($this->settings, function($settingCode, $key) use ($group, $code){
 
 				return $settingCode['key'] == $code && $settingCode['admin_setting_group']['code'] == $group;
 			})['value'];
@@ -381,7 +401,7 @@ class Crud {
 
         if (!$this->menuItems) $this->loadMenuItems();
 
-        $menu = array_first($this->menuItems, function($value) use ($code){
+        $menu = Arr::first($this->menuItems, function($value) use ($code){
             return (is_string($code) ? ($value->code == $code) : ($value->id == $code));
         });
 
@@ -411,7 +431,7 @@ class Crud {
 			function($f){ return $f['name']; },
 
 			array_filter( $crud['fields'], function($f){
-				return $f['type'] == 'relation'
+				return $f['type'] === 'relation'
 				       && ( !$f['json'] )
 				       && ( in_array('browse', $f['visibility']) || count($f['visibility']) == 0);
 			})
@@ -468,8 +488,7 @@ class Crud {
 
 			$file = file_get_contents( __DIR__ . '/Models/DummyModel.template' );
 
-			$file = str_replace('[NAMESPACE]', $namespace, $file);
-			$file = str_replace('[CLASS_NAME]', $className, $file);
+            $file = str_replace(array('[NAMESPACE]', '[CLASS_NAME]'), array($namespace, $className), $file);
 
 			file_put_contents( base_path('/app/' . $className. '.php'), $file );
 		}
@@ -489,20 +508,29 @@ class Crud {
 	 *
 	 */
 	function validateItem($crud, $inputValues){
+		if (is_string($crud)) {
+            $crud = $this->getCrudByCode($crud);
+        }
 
-		if (is_string($crud))
-			$crud = $this->getCrudByCode($crud);
-
-		$validatingFields = array_filter($crud['fields'], function($field){
-			return isset($field['validation']) && !empty($field['validation']);
-		});
-
-		$validationRules = array_combine(
-			array_map( function ($val) {return snake_case($val); }, array_pluck($validatingFields, 'name')),
-			array_map( function ($val) {return $val['validation']; }, $validatingFields)
+		$validatingFields = array_filter(
+		    $crud['fields'],
+            static function($field){
+			    return isset($field['validation']) && !empty($field['validation']);
+		    }
 		);
 
-		$fieldsCaptions = array_pluck($validatingFields, 'caption', 'name');
+		$validationRules = array_combine(
+			array_map(
+			    static function ($val) {return Str::snake($val); },
+                Arr::pluck($validatingFields, 'name')
+            ),
+			array_map(
+                static function ($val) {return $val['validation']; },
+                $validatingFields
+            )
+		);
+
+		$fieldsCaptions = Arr::pluck($validatingFields, 'caption', 'name');
 
 		if (count($validationRules)) {
 
@@ -554,28 +582,26 @@ class Crud {
 
 		// sort fields - relations field to end
 
-		$crud['fields'] = array_sort($crud['fields'], function($val, $key){
-			return $val['type'] == 'relation' ? 1 : 0;
-		});
+		$crud['fields'] = Arr::sort(
+		    $crud['fields'],
+            static function($val, $key){ return $val['type'] === 'relation' ? 1 : 0;}
+        );
 
-		foreach ($crud['fields'] as $field){
+		foreach ($crud['fields'] as $field) {
 
-			if ($field['type'] == 'dynamic'){
-
-				if ($field['additional']['type'] == 'field'){
-
+			if ($field['type'] === 'dynamic'){
+				if ($field['additional']['type'] === 'field'){
 					$field['type'] = $inputValues[$field['additional']['from']];
 				}
 
-				if ($field['additional']['type'] == 'related'){
-
+				if ($field['additional']['type'] === 'related'){
 					[$dynamicRelation, $dynamicField] = explode('.', $field['additional']['from']);
-
-					$field['type'] = $inputValues[snake_case($dynamicRelation)][$dynamicField];
-
+					$field['type'] = $inputValues[Str::snake($dynamicRelation)][$dynamicField];
 				}
 
-				if (!isset($id)) continue;
+				if (!isset($id)) {
+                    continue;
+                }
 			}
 
 			// if not marked as edit field, then go over
@@ -589,10 +615,10 @@ class Crud {
 				continue;
 			}
 
-			if ($field['type'] == 'textbox'){
+			if ($field['type'] === 'textbox'){
 
 				if (isset($field['additional']) && isset($field['additional']['mode'])
-				    && ($field['additional']['mode'] == 'password')) {
+				    && ($field['additional']['mode'] === 'password')) {
 
 					if (isset($inputValues[$field['name']]) && !empty($inputValues[$field['name']])) {
 
@@ -606,76 +632,78 @@ class Crud {
 				continue;
 			}
 
-			if ($field['type'] == 'dropdown'){
+			if ($field['type'] === 'dropdown'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ($field['type'] == 'checkbox'){
+			if ($field['type'] === 'checkbox'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ($field['type'] == 'datepicker'){
+			if ($field['type'] === 'datepicker'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ($field['type'] == 'colorbox'){
+			if ($field['type'] === 'colorbox'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ($field['type'] == 'image'){
+			if ($field['type'] === 'image'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ($field['type'] == 'textarea'){
+			if ($field['type'] === 'textarea'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ($field['type'] == 'richedit'){
+			if ($field['type'] === 'richedit'){
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 				continue;
 			}
 
-			if ( ($field['type'] == 'relation') && $field['json'] ) {
+			if ( ($field['type'] === 'relation') && $field['json'] ) {
 
 				$item[$field['name']] = $inputValues[$field['name']];
 
 			}
 
-			if ( ($field['type'] == 'relation') && !$field['json'] ){
+			if ( ($field['type'] === 'relation') && !$field['json'] ){
 
 				$crudField = null;
 
-				if (isset($inputValues[snake_case($field['name'])])) {
-					$crudField = $inputValues[snake_case($field['name'])];
+				if (isset($inputValues[Str::snake($field['name'])])) {
+					$crudField = $inputValues[Str::snake($field['name'])];
 				} else {
-					if (isset($crudField)) unset($crudField);
+					if (isset($crudField)) {
+                        unset($crudField);
+                    }
 				}
 
 				$relationCrud = $this->getCrudByCode($field['relation']['crud']['code']);
 
 				/************************************ belongsTo ************************************/
 
-				if ( $field['relation']['type'] == 'belongsTo'){
+				if ($field['relation']['type'] === 'belongsTo'){
 
 					if (!isset($crudField) || empty($crudField)){
 						$item->{$field['name']}()->dissociate();
@@ -692,7 +720,7 @@ class Crud {
 
 				/************************************ hasMany ************************************/
 
-				if ($field['relation']['type'] == 'hasMany'){
+				if ($field['relation']['type'] === 'hasMany'){
 
 					if (!$itemSaved) {
 						$item->save();
@@ -724,7 +752,7 @@ class Crud {
 
 				/************************************ belongsToMany ************************************/
 
-				if ($field['relation']['type'] == 'belongsToMany'){
+				if ($field['relation']['type'] === 'belongsToMany'){
 
 					if (!$itemSaved) {
 						$item->save();
@@ -754,7 +782,7 @@ class Crud {
 
                                 $pivotValues = [];
 
-                                forEach (array_sort($field['relation']['pivot'], 'json') as $pivotField) {
+                                forEach (Arr::sort($field['relation']['pivot'], 'json') as $pivotField) {
 
                                     if (isset($crudRelatedItem['pivot'][$pivotField['name']])) {
 
@@ -771,7 +799,7 @@ class Crud {
 
                                             $jsonFieldPath = implode('.', $jsonFieldPath);
 
-                                            array_set($pivotValues[$jsonFieldRoot], $jsonFieldPath, $crudRelatedItem['pivot'][$pivotField['name']]);
+                                            Arr::set($pivotValues[$jsonFieldRoot], $jsonFieldPath, $crudRelatedItem['pivot'][$pivotField['name']]);
                                         }
                                     }
                                 }
@@ -797,7 +825,7 @@ class Crud {
 
 				/************************************ hasOne ************************************/
 
-				if ($field['relation']['type'] == 'hasOne'){
+				if ($field['relation']['type'] === 'hasOne'){
 
 					if (!$itemSaved) {
 						$item->save();
@@ -812,17 +840,13 @@ class Crud {
 			}
 		}
 
-		if (isset($crud['type']) && $crud['type'] == 'tree'){
-
-			if( !isset($id) ){
-                if ($item->parent_id == null){
-
-                    $item->order = call_user_func($crud['model']."::where", 'parent_id', '=', $item->parent_id)->
-                        where($crud['id'],'<>', $item->id)->max('order') + 1;
-                } else {
-                    $item->order = call_user_func($crud['model']."::whereNull", 'parent_id')->
-                        where($crud['id'],'<>', $item->id)->max('order') + 1;
-                }
+		if (isset($crud['type']) && ($crud['type'] === 'tree') && !isset($id)){
+            if ($item->parent_id === null){
+                $item->order = call_user_func($crud['model']."::where", 'parent_id', '=', $item->parent_id)->
+                    where($crud['id'],'<>', $item->id)->max('order') + 1;
+            } else {
+                $item->order = call_user_func($crud['model']."::whereNull", 'parent_id')->
+                    where($crud['id'],'<>', $item->id)->max('order') + 1;
             }
 		}
 
@@ -831,7 +855,5 @@ class Crud {
         }
 
 		return $item;
-
 	}
-
 }

@@ -4,6 +4,8 @@ Builded with <a href="https://vuejs.org" target="_blank">Vue.js</a>, <a href="ht
 
 Manage your data, store files.
 
+Support Laravel 7
+
 ![crud table](http://teacup.kz/laravel-crud/Screenshot_3.png)
 ![crud media](http://teacup.kz/laravel-crud/Screenshot_1.png)
 
