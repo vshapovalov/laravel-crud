@@ -14,7 +14,7 @@ class CreateCrudFormsTable extends Migration
     public function up()
     {
         Schema::create('crud_forms', function (Blueprint $table) {
-	        $table->increments('sur_id');
+	        $table->bigIncrements('sur_id');
 	        $table->string('name', 191);
 	        $table->string('code', 191);
 	        $table->string('model', 191);

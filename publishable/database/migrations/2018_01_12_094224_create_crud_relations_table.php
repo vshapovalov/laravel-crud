@@ -14,9 +14,9 @@ class CreateCrudRelationsTable extends Migration
     public function up()
     {
         Schema::create('crud_relations', function (Blueprint $table) {
-            $table->increments('id');
+            $table->bigIncrements('id');
 	        $table->string('type', 191);
-	        $table->integer('crud_form_id')->unsigned();
+	        $table->bigInteger('crud_form_id')->unsigned();
             $table->timestamps();
         });
     }

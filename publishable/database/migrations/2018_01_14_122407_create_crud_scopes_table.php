@@ -14,8 +14,8 @@ class CreateCrudScopesTable extends Migration
     public function up()
     {
         Schema::create('crud_scopes', function (Blueprint $table) {
-            $table->increments('id');
-	        $table->integer('crud_form_id')->unsigned()->nullable();
+            $table->bigIncrements('id');
+	        $table->bigInteger('crud_form_id')->unsigned()->nullable();
 	        $table->foreign('crud_form_id', 'crud_scopes_crud_form_id_foreign')
 	              ->references('sur_id')
 	              ->on('crud_forms')

@@ -14,7 +14,7 @@ class CreateAdminSettingGroupsTable extends Migration
     public function up()
     {
         Schema::create('admin_setting_groups', function (Blueprint $table) {
-            $table->increments('id');
+            $table->bigIncrements('id');
             $table->string('code');
 	        $table->string('name');
         });

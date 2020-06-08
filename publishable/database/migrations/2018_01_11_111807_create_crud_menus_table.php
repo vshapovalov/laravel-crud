@@ -14,13 +14,13 @@ class CreateCrudMenusTable extends Migration
     public function up()
     {
         Schema::create('crud_menus', function (Blueprint $table) {
-            $table->increments('id');
+            $table->bigIncrements('id');
 	        $table->string('name', 191);
 	        $table->string('caption', 191);
             $table->string('icon', 191)->nullable();
 	        $table->string('action', 191)->nullable();
 	        $table->boolean('default')->default(false);
-	        $table->integer('parent_id')->nullable();
+	        $table->bigInteger('parent_id')->nullable();
 	        $table->integer('order')->default(0);
 	        $table->string('status')->default('enabled')->nullable();
             $table->timestamps();
